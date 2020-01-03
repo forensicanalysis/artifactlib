@@ -81,7 +81,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@master
         with:
-          name: artifact ${{ matrix.os }}
+          name: artifactvalidator ${{ matrix.os }}
           path: ./cmd/artifactvalidator/bin
 
   pyartifacts:
