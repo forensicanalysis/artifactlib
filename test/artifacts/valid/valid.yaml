@@ -1,0 +1,73 @@
+# Artifact definitions for testing
+
+name: GoVersionCommand
+doc: Minimal dummy artifact definition for tests
+sources:
+- type: COMMAND
+  attributes:
+    cmd: docker
+    args: [version]
+---
+name: GoInfoCommand
+doc: Full Dummy artifact definition for tests
+sources:
+- type: COMMAND
+  attributes:
+    cmd: docker
+    args: [info]
+  conditions: [time_zone != Pacific/Galapagos]
+  supported_os: [Windows,Linux,Darwin]
+conditions: [time_zone != Pacific/Galapagos]
+labels: [Docker]
+provides: [environ_systemroot]
+supported_os: [Windows,Linux,Darwin]
+urls: ['https://docs.docker.com/engine/reference/commandline/info/']
+---
+name: MysteriousCommand
+doc: Mysterious command to provide all parameter
+sources:
+- type: COMMAND
+  attributes:
+    cmd: env
+    args: []
+provides:
+  - users.username
+  - users.temp
+  - users.desktop
+  - users.last_logon
+  - users.full_name
+  - users.userdomain
+  - users.sid
+  - users.userprofile
+  - users.appdata
+  - users.localappdata
+  - users.internet_cache
+  - users.cookies
+  - users.recent
+  - users.personal
+  - users.startup
+  - users.localappdata_low
+  - users.homedir
+  - users.uid
+  - users.gid
+  - users.shell
+  - users.pw_entry
+  - fqdn
+  - time_zone
+  - os
+  - os_major_version
+  - os_minor_version
+  - environ_path
+  - environ_temp
+  - os_release
+  - environ_systemroot
+  - environ_windir
+  - environ_programfiles
+  - environ_programfilesx86
+  - environ_systemdrive
+  - environ_profilesdirectory
+  - environ_allusersprofile
+  - environ_allusersappdata
+  - current_control_set
+  - code_page
+  - domain
