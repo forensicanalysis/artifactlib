@@ -1,0 +1,108 @@
+name: CI
+on: [push]
+
+jobs:
+
+  goartifacts:
+    name: goartifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - name: Setup go 1.13
+        uses: actions/setup-go@v1
+        with: {go-version: 1.13}
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Set system path
+        run: echo "##[add-path]$(go env GOPATH)/bin"
+        shell: bash
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Install golangci-lint & go-acc
+        run: |
+          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.21.0
+          go get -u github.com/ory/go-acc
+        shell: bash
+
+      - name: Lint
+        run: golangci-lint run --verbose --tests=false --deadline=3m --config test/.golangci.yml
+        shell: bash
+      - name: Test
+        run: go-acc ./...
+        shell: bash
+      - name: Upload coverage
+        env:
+          CI: "true"
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: bash <(curl -s https://codecov.io/bash)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+
+  artifactvalidator:
+    name: artifactvalidator
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - name: Setup go 1.13
+        uses: actions/setup-go@v1
+        with: {go-version: '1.13'}
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Set system path
+        run: echo "##[add-path]$(go env GOPATH)/bin"
+        shell: bash
+      - name: Download dependencies
+        run: go mod download
+
+      # - name: Setup node
+      #   uses: actions/setup-node@v1
+      #   with: {node-version: '10.x'}
+      # - name: Install bats
+      #   run: npm install -g bats
+
+      - name: Build
+        run: |
+          go build .
+          go install .
+          mkdir bin
+          mv artifact* bin
+        working-directory: ./cmd/artifactvalidator
+        shell: bash
+
+      # - name: Bats test
+      #   run: bats test/bats/artifact.bats test/bats/artifact_validate.bats
+      #   shell: bash
+
+      - name: Upload
+        uses: actions/upload-artifact@master
+        with:
+          name: artifact ${{ matrix.os }}
+          path: ./cmd/artifactvalidator/bin
+
+  pyartifacts:
+    name: pyartifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        python-version: [3.6, 3.7]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - run: python setup.py install
+    - run: pip install pylint pytest pytest-cov
+    - run: pylint pyartifacts --rcfile test/.pylintrc
+    - run: pytest -v --cov-config .coveragerc --cov-report html:coverage --cov-report term --cov=pyartifacts test/test_reader.py
+      shell: bash
+    # - name: Python Documentation
+    #   run: |
+    #     pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
+    #     sphinx-build -M markdown pyartifacts/docs/src/ public/pyartifacts/docs/
+    #     sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
