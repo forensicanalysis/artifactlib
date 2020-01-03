@@ -38,9 +38,9 @@ func ExampleProcessArtifacts() {
 
 	// []string{"Test1"}: Artifacts to filter for, artifacts groups are expanded
 	// fs: File system used for expansion
-	// true: Flag if multiple partitions are tried on windows
+	// false: Flag if multiple partitions are tried on windows
 	// []string{"test/artifacts/collect_1.yaml"}: Files with artifact defintions
-	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, true, []string{"test/artifacts/collect_1.yaml"})
+	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, false, []string{"test/artifacts/collect_1.yaml"})
 
 	// print resolved paths of the parsed artifact definition
 	fmt.Println(artifacts[0].Sources[0].Attributes.Paths)

@@ -32,6 +32,7 @@ forensic artifacts definitions.
 
 ## Python library
 
+<!--
 ### Installation
 
 Python installation can be easily done via pip:
@@ -39,6 +40,7 @@ Python installation can be easily done via pip:
 ```bash
 pip install pyartifacts
 ```
+-->
 
 ### Usage
 
@@ -51,7 +53,9 @@ if __name__ == '__main__':
     print(registry)
 ```
 
+<!--
 The full documentation can be found in [the documentation](TODO).
+-->
 
 ## Go package
 
@@ -115,6 +119,3 @@ func main() {
 }
 
 ```
-
-
-The full documentation can be found in the [godocs](https://pkg.go.dev/github.com/forensicanalysis/artifactlib).

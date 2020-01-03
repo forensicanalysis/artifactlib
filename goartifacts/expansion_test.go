@@ -22,13 +22,15 @@
 package goartifacts
 
 import (
-	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
-	"github.com/forensicanalysis/fslib/filesystem/systemfs"
 	"reflect"
 	"runtime"
 	"sort"
+	"strings"
 	"testing"
+
+	"github.com/forensicanalysis/fslib"
+	"github.com/forensicanalysis/fslib/filesystem/osfs"
+	"github.com/forensicanalysis/fslib/filesystem/systemfs"
 
 	"github.com/forensicanalysis/fslib/filesystem/testfs"
 )
@@ -60,11 +62,11 @@ func TestExpand(t *testing.T) {
 	}{
 		{
 			"Expand", args{
-			getInFS(),
-			[]ArtifactDefinition{
-				{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/*/bar.bin"}}}}},
+				getInFS(),
+				[]ArtifactDefinition{
+					{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/*/bar.bin"}}}}},
+				},
 			},
-		},
 			[]ArtifactDefinition{
 				{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/dir/bar.bin"}}}}},
 			}, false,
@@ -93,6 +95,12 @@ func Test_expandPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	if runtime.GOOS == "windows" {
+		validPath = validPath[:1] + strings.ToUpper(validPath[1:2]) + validPath[2:]
+		invalidPath = invalidPath[:1] + strings.ToUpper(invalidPath[1:2]) + invalidPath[2:]
+	}
+
 	winfs, err := systemfs.New()
 	if err != nil {
 		t.Fatal(err)
