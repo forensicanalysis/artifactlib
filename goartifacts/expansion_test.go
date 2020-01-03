@@ -96,8 +96,10 @@ func Test_expandPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	validPath = validPath[:1] + strings.ToUpper(validPath[1:2]) + validPath[2:]
-	invalidPath = invalidPath[:1] + strings.ToUpper(invalidPath[1:2]) + invalidPath[2:]
+	if runtime.GOOS == "windows" {
+		validPath = validPath[:1] + strings.ToUpper(validPath[1:2]) + validPath[2:]
+		invalidPath = invalidPath[:1] + strings.ToUpper(invalidPath[1:2]) + invalidPath[2:]
+	}
 
 	winfs, err := systemfs.New()
 	if err != nil {
