@@ -99,6 +99,7 @@ jobs:
     - run: python setup.py install
     - run: pip install pylint pytest pytest-cov
     - run: pylint pyartifacts --rcfile test/.pylintrc
+      continue-on-error: true
     - run: pytest -v --cov-config .coveragerc --cov-report html:coverage --cov-report term --cov=pyartifacts test/test_reader.py
       shell: bash
     # - name: Python Documentation
