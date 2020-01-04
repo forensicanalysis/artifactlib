@@ -51,7 +51,6 @@ func ValidateFiles(filenames []string) (flaws []Flaw, err error) {
 
 // ProcessFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.
 func ProcessFiles(artifacts []string, infs fslib.FS, addPartitions bool, filenames []string) (artifactDefinitions []ArtifactDefinition, err error) {
-	artifactDefinitionMap := map[string][]ArtifactDefinition{}
 
 	// decode file
 	for _, filename := range filenames {
@@ -60,7 +59,6 @@ func ProcessFiles(artifacts []string, infs fslib.FS, addPartitions bool, filenam
 			return artifactDefinitions, err
 		}
 		artifactDefinitions = append(artifactDefinitions, ads...)
-		artifactDefinitionMap[filename] = ads
 	}
 
 	// select from entrypoint
@@ -81,6 +79,30 @@ func ProcessFiles(artifacts []string, infs fslib.FS, addPartitions bool, filenam
 type NamedSource struct {
 	Source
 	Name string
+}
+
+// ParallelProcessArtifacts takes a list of artifact definitions. Those artifact definitions are filtered and expanded.
+func ParallelProcessArtifacts(artifacts []string, infs fslib.FS, addPartitions bool, artifactDefinitions []ArtifactDefinition) (<-chan NamedSource, int, error) {
+	// select from entrypoint
+	if artifacts != nil {
+		artifactDefinitions = searchArtifacts(artifacts, artifactDefinitions)
+	}
+
+	// select supported os
+	artifactDefinitions = filterOS(artifactDefinitions)
+
+	sourceCount := 0
+	for _, a := range artifactDefinitions {
+		sourceCount += len(a.Sources)
+	}
+
+	sourceChannel := make(chan NamedSource, 100)
+	// expand and glob
+	go func() {
+		ExpandChannel(sourceChannel, infs, artifactDefinitions, addPartitions)
+		close(sourceChannel)
+	}()
+	return sourceChannel, sourceCount, nil
 }
 
 // ParallelProcessFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.
