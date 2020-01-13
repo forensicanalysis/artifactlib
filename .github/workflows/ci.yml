@@ -59,11 +59,11 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      # - name: Setup node
-      #   uses: actions/setup-node@v1
-      #   with: {node-version: '10.x'}
-      # - name: Install bats
-      #   run: npm install -g bats
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with: {node-version: '10.x'}
+      - name: Install bats
+        run: npm install -g bats
 
       - name: Build
         run: |
@@ -74,9 +74,9 @@ jobs:
         working-directory: ./cmd/artifactvalidator
         shell: bash
 
-      # - name: Bats test
-      #   run: bats test/bats/artifact.bats test/bats/artifact_validate.bats
-      #   shell: bash
+      - name: Bats test
+        run: bats test/bats/artifactvalidator.bats
+        shell: bash
 
       - name: Upload
         uses: actions/upload-artifact@master
