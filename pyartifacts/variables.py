@@ -19,18 +19,22 @@
 #
 # Author(s): Demian Kellermann
 
+# pylint: disable=too-few-public-methods
+
 """ Module for helpers regarding variable expansion """
 
-from collections import defaultdict
-import re
 import logging
+import re
+from collections import defaultdict
 from typing import Set, Iterable, Dict, Callable, TYPE_CHECKING
 
 import networkx
 
-from .definitions import *
+from .definitions import SOURCE_TYPE_DIRECTORY, SOURCE_TYPE_FILE, SOURCE_TYPE_PATH, SOURCE_TYPE_REGISTRY_KEY, \
+    SOURCE_TYPE_REGISTRY_VALUE
+
 if TYPE_CHECKING:  # we need this disabled at runtime since it's a circular import
-    from .artifact import ArtifactDefinition, ArtifactSource
+    from .artifact import ArtifactDefinition, ArtifactSource # pylint: disable=cyclic-import
 
 LOGGER = logging.getLogger(__name__)
 VARIABLE_IDENTIFIER = re.compile(r'(%?%([a-zA-Z0-9_.-]+)%?%)')
@@ -73,12 +77,12 @@ class KnowledgeBase:
 
         # get the providers of this value (in-edges in the graph)
         if key not in self.graph:
-            raise ValueError("No providers found for %s", key)
+            raise ValueError("No providers found for %s" % key)
 
         collected_values: Set[str] = set()
         providers = self.graph.in_edges(nbunch=[key])
         if not providers:
-            raise ValueError("No providers are registered for %s", key)
+            raise ValueError("No providers are registered for %s" % key)
         for provider, __ in providers:
             provider_result = resolve_callback(provider)
             collected_values.update(self._extract_var(key, provider, provider_result))
@@ -92,18 +96,17 @@ class KnowledgeBase:
         if source.type == SOURCE_TYPE_FILE:
             all_data = [line.strip() for text in data for line in text.split('\n')]
         elif source.type in (SOURCE_TYPE_PATH, SOURCE_TYPE_DIRECTORY,
-                           SOURCE_TYPE_REGISTRY_KEY, SOURCE_TYPE_REGISTRY_VALUE):
+                             SOURCE_TYPE_REGISTRY_KEY, SOURCE_TYPE_REGISTRY_VALUE):
             all_data = data
         else:
-            raise ValueError("Unsupported source type for variable expansion: %s", source.type)
+            raise ValueError("Unsupported source type for variable expansion: %s" % source.type)
 
         for provider in source.provides:
             if provider.key == key:  # have to fish out the right provides-directive
                 if provider.regex:
                     return [m.group(1) for l in all_data for m in (re.search(provider.regex, l),) if m]
-                else:
-                    return all_data
-        raise ValueError("No provider matched %s", key)
+                return all_data
+        raise ValueError("No provider matched %s" % key)
 
     def _build_graph(self, artifacts: Dict[str, 'ArtifactDefinition']) -> None:
         for artifact in artifacts.values():
