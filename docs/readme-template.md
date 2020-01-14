@@ -56,7 +56,7 @@ The full documentation can be found in the [godocs](https://pkg.go.dev/{{.Module
 
 ## Contact
 
-For feedback, questions and discussions you can use the [Open Source DFIR Slack](https://github.com/open-source-dfir/slack). [How to get an invite](https://github.com/google/timesketch/blob/master/docs/Community-Guide.md).
+For feedback, questions and discussions you can use the [Open Source DFIR Slack](https://github.com/open-source-dfir/slack).
 
 ## Acknowledgment
 
