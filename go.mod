@@ -3,7 +3,7 @@ module github.com/forensicanalysis/artifactlib
 go 1.13
 
 require (
-	github.com/forensicanalysis/fslib v0.12.0
+	github.com/forensicanalysis/fslib v0.12.1
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/looplab/tarjan v0.0.0-20161115091335-9cc6d6cebfb5
