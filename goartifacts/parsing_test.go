@@ -82,7 +82,8 @@ func TestDecoder_Decode(t *testing.T) {
 		Sources: []Source{{
 			Type: "FILE",
 			Attributes: Attributes{
-				Paths: []string{`%%environ_systemroot%%\System32\winevt\Logs\System.evtx`},
+				Paths:     []string{`%%environ_systemroot%%\System32\winevt\Logs\System.evtx`},
+				Separator: `\`,
 			},
 		}},
 		Conditions:  []string{"os_major_version >= 6"},

@@ -8,4 +8,4 @@ sources:
     cmd: hostname
 - type: FILE
   attributes:
-    paths: ["/var"]
+    paths: ["/dev"]

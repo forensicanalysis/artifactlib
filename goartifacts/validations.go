@@ -362,8 +362,8 @@ func (r *validator) validateRequiredWindowsAttributes(filename, artifactDefiniti
 		if len(source.Attributes.Paths) == 0 {
 			r.addWarning(filename, artifactDefinition, "A %s requires the paths attribute", source.Type)
 		}
-		if source.Attributes.Separator != "\\" {
-			r.addWarning(filename, artifactDefinition, "A %s requires the separator \"\\\" attribute", source.Type)
+		if source.Attributes.Separator != "" && source.Attributes.Separator != "\\" {
+			r.addWarning(filename, artifactDefinition, "A %s requires a separator value of \"\\\" or \"\"", source.Type)
 		}
 	case sourceType.RegistryKey:
 		if len(source.Attributes.Keys) == 0 {

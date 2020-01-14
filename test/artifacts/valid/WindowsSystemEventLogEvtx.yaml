@@ -2,8 +2,9 @@ name: WindowsSystemEventLogEvtx
 doc: Windows System Event log for Vista or later systems.
 sources:
 - type: FILE
-  attributes: {paths: ['%%environ_systemroot%%\System32\winevt\Logs\System.evtx']}
-  separator: '\'
+  attributes:
+    paths: ['%%environ_systemroot%%\System32\winevt\Logs\System.evtx']
+    separator: '\'
 conditions: [os_major_version >= 6]
 labels: [Logs]
 supported_os: [Windows]

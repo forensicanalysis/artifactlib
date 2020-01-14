@@ -5,5 +5,5 @@ doc: Minimal dummy artifact definition for tests
 sources:
 - type: DIRECTORY
   attributes:
-    paths: ['/var']
+    paths: ['/dev']
   supported_os: ['Darwin', "Linux"]
