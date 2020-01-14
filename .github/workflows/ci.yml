@@ -96,7 +96,7 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - run: python setup.py install
+    - run: pip install .
     - run: pip install pylint pytest pytest-cov
     - run: pylint pyartifacts --rcfile test/.pylintrc
     - run: pytest -v --cov-config .coveragerc --cov-report html:coverage --cov-report term --cov=pyartifacts test/test_reader.py

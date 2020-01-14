@@ -1,9 +1,9 @@
 # Require duplicate paths for certain folders in macOS
 
-name: TestDirectory
+name: Test3Directory
 doc: Minimal dummy artifact definition for tests
 sources:
 - type: DIRECTORY
   attributes:
-    paths: ['/etc']
+    paths: ['/var']
   supported_os: ['Darwin', "Linux"]
