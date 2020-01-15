@@ -127,11 +127,11 @@ func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDef
 		}
 	}
 
-	for parameter := range knowledgeBase {
+	/* for parameter := range knowledgeBase {
 		if val, ok := knownProvides[parameter]; !ok {
 			r.addInfo("", val, "Parameter %s is not provided", parameter)
 		}
-	}
+	}*/
 }
 
 // file
