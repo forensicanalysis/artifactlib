@@ -53,9 +53,7 @@ if __name__ == '__main__':
     print(registry)
 ```
 
-<!--
-The full documentation can be found in [the documentation](TODO).
--->
+The full documentation can be found in [the documentation](https://forensicanalysis.github.io/artifactlib/pyartifacts/docs/html).
 
 ## Go package
 
