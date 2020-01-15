@@ -32,10 +32,10 @@ import (
 
 func TestProcessFiles(t *testing.T) {
 	result := []ArtifactDefinition{{
-		Name: "TestDirectory",
+		Name: "Test3Directory",
 		Doc:  "Minimal dummy artifact definition for tests",
 		Sources: []Source{{
-			Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/etc"}}, SupportedOs: []string{"Darwin", "Linux"},
+			Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/dev"}}, SupportedOs: []string{"Darwin", "Linux"},
 		}},
 	}}
 
@@ -85,7 +85,7 @@ func TestDecodeFile(t *testing.T) {
 		want1   []Flaw
 		wantErr bool
 	}{
-		{"Valid Artifact Definitions", args{"../test/artifacts/valid/mac_os_double_path_3.yaml"}, []ArtifactDefinition{{Name: "TestDirectory", Doc: "Minimal dummy artifact definition for tests", Sources: []Source{{Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/etc", "/private/etc"}}, SupportedOs: []string{"Darwin"}}}}}, nil, false},
+		{"Valid Artifact Definitions", args{"../test/artifacts/valid/mac_os_double_path_3.yaml"}, []ArtifactDefinition{{Name: "Test1Directory", Doc: "Minimal dummy artifact definition for tests", Sources: []Source{{Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/etc", "/private/etc"}}, SupportedOs: []string{"Darwin"}}}}}, nil, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

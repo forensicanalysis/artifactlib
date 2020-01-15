@@ -1,4 +1,6 @@
-name: WindowsRegistryCurrentControlSet
+# WindowsRegistryCurrentControlSet test yml
+
+name: WindowsRegistryCurrentControlSetRegistryValue
 doc: The current control set of the Windows Registry.
 sources:
 - type: REGISTRY_VALUE

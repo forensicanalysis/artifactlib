@@ -49,11 +49,11 @@ var logger = log.New()
 func main() {
 	exitcode := 0
 	// parse flags
-	var verbose, summary, veryverbose, nofail bool
-	flag.BoolVar(&veryverbose, "veryverbose", false, "veryverbose output")
-	flag.BoolVar(&veryverbose, "vv", false, "veryverbose output"+" (shorthand)")
-	flag.BoolVar(&verbose, "verbose", false, "verbose output")
-	flag.BoolVar(&verbose, "v", false, "verbose output"+" (shorthand)")
+	var verbose, summary, quite, nofail bool
+	flag.BoolVar(&verbose, "verbose", false, "show common flaws as well")
+	flag.BoolVar(&verbose, "v", false, "show common flaws as well"+" (shorthand)")
+	flag.BoolVar(&quite, "quite", false, "hide informational flaws")
+	flag.BoolVar(&quite, "q", false, "hide informational flaws"+" (shorthand)")
 	flag.BoolVar(&summary, "summary", false, "show summary")
 	flag.BoolVar(&summary, "s", false, "show summary"+" (shorthand)")
 	flag.BoolVar(&nofail, "no-fail", false, "do not fail on flaws")
@@ -62,12 +62,12 @@ func main() {
 	// setup logging
 	handler := log.StreamHandler(os.Stdout, log.TerminalFormat())
 	switch {
-	case veryverbose:
-		logger.SetHandler(handler)
 	case verbose:
-		logger.SetHandler(log.LvlFilterHandler(log.LvlInfo, handler))
-	default:
+		logger.SetHandler(handler)
+	case quite:
 		logger.SetHandler(log.LvlFilterHandler(log.LvlWarn, handler))
+	default:
+		logger.SetHandler(log.LvlFilterHandler(log.LvlInfo, handler))
 	}
 
 	args := flag.Args()
@@ -91,9 +91,21 @@ func main() {
 		logger.Crit(err.Error())
 		os.Exit(1)
 	}
-	if len(flaws) > 0 {
+
+	var filteredFlaws []goartifacts.Flaw
+	if verbose {
+		filteredFlaws = flaws
+	} else {
+		for _, flaw := range flaws {
+			if flaw.Severity >= goartifacts.Warning || (!quite && flaw.Severity == goartifacts.Info) {
+				filteredFlaws = append(filteredFlaws, flaw)
+			}
+		}
+	}
+
+	if len(filteredFlaws) > 0 {
 		exitcode = 1
-		printFlaws(flaws)
+		printFlaws(filteredFlaws)
 		if nofail {
 			exitcode = 0
 		}
