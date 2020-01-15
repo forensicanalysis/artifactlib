@@ -117,7 +117,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
     - name: Build and Deploy
       uses: peaceiris/actions-gh-pages@v2
-      with:
+      env:
         ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         PUBLISH_BRANCH: gh-pages
         PUBLISH_DIR: public/pyartifacts/docs/html
