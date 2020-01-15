@@ -25,6 +25,7 @@ author = 'Jonas Plum'
 release = '0.1.0'
 
 html_baseurl = 'https://forensicanalysis.github.io/artifactlib/'
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
