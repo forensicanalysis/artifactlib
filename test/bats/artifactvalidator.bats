@@ -22,12 +22,12 @@
 
 
 @test "artifactvalidator" {
-  run artifactvalidator -vv test/artifacts/valid/*
+  run artifactvalidator -v test/artifacts/valid/*
   echo $output
   [ "$status" -eq 0 ]
 
   for filename in test/artifacts/invalid/*; do
-    run artifactvalidator -vv $filename
+    run artifactvalidator -v $filename
     echo filename
     [ "$status" -ne 0 ]
   done
