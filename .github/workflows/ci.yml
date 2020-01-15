@@ -120,5 +120,5 @@ jobs:
       env:
         ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         PUBLISH_BRANCH: gh-pages
-        PUBLISH_DIR: public/pyartifacts/docs/html
-      if: matrix.os == 'ubuntu-latest'
+        PUBLISH_DIR: public
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 # && github.ref == 'refs/heads/master'
