@@ -1,4 +1,6 @@
-name: WindowsSystemEventLogEvtx
+# WindowsSystemEventLogEvtx test yml
+
+name: WindowsSystemEventLogEvtxFile
 doc: Windows System Event log for Vista or later systems.
 sources:
 - type: FILE

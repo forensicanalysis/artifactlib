@@ -92,7 +92,13 @@ func main() {
 		os.Exit(1)
 	}
 	if len(flaws) > 0 {
-		exitcode = 1
+		for _, flaw := range flaws {
+			if flaw.Severity != goartifacts.Common {
+				exitcode = 1
+				break
+			}
+		}
+
 		printFlaws(flaws)
 		if nofail {
 			exitcode = 0

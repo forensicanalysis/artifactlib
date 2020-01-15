@@ -67,7 +67,7 @@ func TestValidator_ValidateSyntax(t *testing.T) {
 	}{
 		{true, "Non existing file", args{"unknown.yaml"}, []Flaw{{Error, "Error open unknown.yaml: no such file or directory", "", filepath.FromSlash("unknown.yaml")}}},
 		{false, "Comment", args{"../test/artifacts/invalid/file_3.yaml"}, []Flaw{{Info, "The first line should be a comment", "", filepath.FromSlash("../test/artifacts/invalid/file_3.yaml")}}},
-		{false, "Wrong file ending", args{"../test/artifacts/valid/ending.yml"}, []Flaw{{Info, "File should have .yaml ending", "", filepath.FromSlash("../test/artifacts/valid/ending.yml")}}},
+		{false, "Wrong file ending", args{"../test/artifacts/invalid/ending.yml"}, []Flaw{{Info, "File should have .yaml ending", "", filepath.FromSlash("../test/artifacts/invalid/ending.yml")}}},
 		{false, "Whitespace at line end", args{"../test/artifacts/invalid/file_1.yaml"}, []Flaw{{Info, "Line 3 ends with whitespace", "", filepath.FromSlash("../test/artifacts/invalid/file_1.yaml")}}},
 	}
 	for _, tt := range tests {
@@ -78,7 +78,7 @@ func TestValidator_ValidateSyntax(t *testing.T) {
 			r := newValidator()
 			r.validateSyntax(filepath.FromSlash(tt.args.yamlfile))
 			if !flawsEqual(r.flaws, tt.want) {
-				t.Errorf("Validator.validateSyntax() = %v, want %v", r.flaws, tt.want)
+				t.Errorf("Validator.validateSyntax() = %#v, want %#v", r.flaws, tt.want)
 			}
 		})
 	}

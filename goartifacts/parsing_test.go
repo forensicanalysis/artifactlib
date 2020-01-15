@@ -77,7 +77,7 @@ func TestDecoder_Decode(t *testing.T) {
 	windowsRegistryCurrentControlSetYaml, _ := os.Open("../test/artifacts/valid/WindowsRegistryCurrentControlSet.yaml")
 
 	windowsSystemEventLogEvtx := ArtifactDefinition{
-		Name: "WindowsSystemEventLogEvtx",
+		Name: "WindowsSystemEventLogEvtxFile",
 		Doc:  "Windows System Event log for Vista or later systems.",
 		Sources: []Source{{
 			Type: "FILE",
@@ -93,7 +93,7 @@ func TestDecoder_Decode(t *testing.T) {
 	}
 
 	windowsRegistryCurrentControlSet := ArtifactDefinition{
-		Name: "WindowsRegistryCurrentControlSet",
+		Name: "WindowsRegistryCurrentControlSetRegistryValue",
 		Doc:  "The current control set of the Windows Registry.",
 		Sources: []Source{{
 			Type: "REGISTRY_VALUE",
