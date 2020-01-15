@@ -107,7 +107,7 @@ jobs:
         CI: "true"
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: bash <(curl -s https://codecov.io/bash) -F python
-      if: matrix.os == 'windows-latest'
+      if: matrix.os == 'windows-latest' && matrix.python-version == 3.8
       shell: bash
 
     - name: Python Documentation
