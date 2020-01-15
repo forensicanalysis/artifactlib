@@ -114,7 +114,9 @@ jobs:
       run: |
         pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
         sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8
+    - run: touch public/.nojekyll
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8
     - name: Build and Deploy
       uses: peaceiris/actions-gh-pages@v2
       env:
