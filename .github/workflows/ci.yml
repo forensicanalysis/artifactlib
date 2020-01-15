@@ -113,7 +113,6 @@ jobs:
     - name: Python Documentation
       run: |
         pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
-        sphinx-build -M markdown pyartifacts/docs/src/ public/pyartifacts/docs/
         sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
       if: matrix.os == 'ubuntu-latest'
     - name: Build and Deploy
@@ -121,5 +120,5 @@ jobs:
       with:
         ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         PUBLISH_BRANCH: gh-pages
-        PUBLISH_DIR: public/pyartifacts/docs
+        PUBLISH_DIR: public/pyartifacts/docs/html
       if: matrix.os == 'ubuntu-latest'
