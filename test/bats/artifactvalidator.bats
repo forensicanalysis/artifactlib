@@ -27,8 +27,8 @@
   [ "$status" -eq 0 ]
 
   for filename in test/artifacts/invalid/*; do
-    run artifactvalidator -v $filename
     echo $filename
+    run artifactvalidator -v $filename
     [ "$status" -ne 0 ]
   done
 }

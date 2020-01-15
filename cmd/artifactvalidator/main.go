@@ -104,6 +104,7 @@ func main() {
 	}
 
 	if len(filteredFlaws) > 0 {
+		exitcode = 1
 		printFlaws(filteredFlaws)
 		if nofail {
 			exitcode = 0
