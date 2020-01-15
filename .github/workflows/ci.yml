@@ -37,7 +37,7 @@ jobs:
         env:
           CI: "true"
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        run: bash <(curl -s https://codecov.io/bash)
+        run: bash <(curl -s https://codecov.io/bash) -F go
         if: matrix.os == 'windows-latest'
         shell: bash
 
@@ -99,10 +99,27 @@ jobs:
     - run: pip install .
     - run: pip install pylint pytest pytest-cov
     - run: pylint pyartifacts --rcfile test/.pylintrc
-    - run: pytest -v --cov-config .coveragerc --cov-report html:coverage --cov-report term --cov=pyartifacts test/test_reader.py
+    - run: pytest -v --cov-config .coveragerc --cov-report=xml --cov=pyartifacts test/test_reader.py
       shell: bash
-    # - name: Python Documentation
-    #   run: |
-    #     pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
-    #     sphinx-build -M markdown pyartifacts/docs/src/ public/pyartifacts/docs/
-    #     sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
+
+    - name: Upload coverage
+      env:
+        CI: "true"
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: bash <(curl -s https://codecov.io/bash) -F python
+      if: matrix.os == 'windows-latest'
+      shell: bash
+
+    - name: Python Documentation
+      run: |
+        pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
+        sphinx-build -M markdown pyartifacts/docs/src/ public/pyartifacts/docs/
+        sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
+      if: matrix.os == 'ubuntu-latest'
+    - name: Build and Deploy
+      uses: docker://peaceiris/gh-pages:v2
+      with:
+        ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        PUBLISH_BRANCH: gh-pages
+        PUBLISH_DIR: public/pyartifacts/docs
+      if: matrix.os == 'ubuntu-latest'
