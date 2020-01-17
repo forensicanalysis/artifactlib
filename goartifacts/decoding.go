@@ -19,8 +19,6 @@
 //
 // Author(s): Jonas Plum
 
-// Package goartifacts provides functions for parsing and validating forensic
-// artifact definition files.
 package goartifacts
 
 import (

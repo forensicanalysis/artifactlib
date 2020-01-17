@@ -12,6 +12,8 @@ The artifactlib project provides a Go package and a Python library for processin
 forensic artifact definition files.
 
 ## Artifact definition files
+
+The artifact definition format is described in detail in the [Style Guide](https://github.com/forensicanalysis/artifactlib/blob/master/docs/style_guide.md).
 The following shows an example for an artifact definition file. It defines the
 location of linux audit log files on a system.
 
@@ -24,9 +26,9 @@ sources:
 supported_os: [Linux]
 ```
 
+
 We use [https://github.com/forensicanalysis/artifacts](https://github.com/forensicanalysis/artifacts) as the main repository for
 forensic artifacts definitions.
-
 
 ## Python library
 
@@ -74,6 +76,17 @@ import (
 	"github.com/forensicanalysis/fslib/filesystem/testfs"
 )
 
+type MyResolver struct{}
+
+func (r *MyResolver) Resolve(s string) ([]string, error) {
+	switch s {
+	case "SystemRoot":
+		return []string{`C:\WINDOWS`}, nil
+	default:
+		return []string{s}, nil
+	}
+}
+
 func main() {
 	// This parses the arifact files, filters for the current OS, expands variables
 	// and globing parameters
@@ -86,7 +99,7 @@ func main() {
 	// fs: File system used for expansion
 	// true: Flag if multiple partitions are tried on windows
 	// []string{"test/artifacts/collect_1.yaml"}: Files with artifact defintions
-	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, true, []string{"test/artifacts/collect_1.yaml"})
+	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, true, []string{"test/artifacts/collect_1.yaml"}, &MyResolver{})
 
 	// print resolved paths of the parsed artifact definition
 	fmt.Println(artifacts[0].Sources[0].Attributes.Paths)
