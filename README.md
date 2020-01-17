@@ -28,11 +28,8 @@ We use [https://github.com/forensicanalysis/artifacts](https://github.com/forens
 forensic artifacts definitions.
 
 
-
-
 ## Python library
 
-<!--
 ### Installation
 
 Python installation can be easily done via pip:
@@ -40,12 +37,11 @@ Python installation can be easily done via pip:
 ```bash
 pip install pyartifacts
 ```
--->
 
 ### Usage
 
 ```python
-import forensicstore
+from pyartifacts.registry import Registry
 
 if __name__ == '__main__':
     registry = Registry()
