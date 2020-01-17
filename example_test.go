@@ -28,6 +28,17 @@ import (
 	"github.com/forensicanalysis/fslib/filesystem/testfs"
 )
 
+type MyResolver struct{}
+
+func (r *MyResolver) Resolve(s string) ([]string, error) {
+	switch s {
+	case "SystemRoot":
+		return []string{`C:\WINDOWS`}, nil
+	default:
+		return []string{s}, nil
+	}
+}
+
 func ExampleProcessArtifacts() {
 	// This parses the arifact files, filters for the current OS, expands variables
 	// and globing parameters
@@ -40,7 +51,7 @@ func ExampleProcessArtifacts() {
 	// fs: File system used for expansion
 	// false: Flag if multiple partitions are tried on windows
 	// []string{"test/artifacts/collect_1.yaml"}: Files with artifact defintions
-	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, false, []string{"test/artifacts/collect_1.yaml"})
+	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, false, []string{"test/artifacts/collect_1.yaml"}, &MyResolver{})
 
 	// print resolved paths of the parsed artifact definition
 	fmt.Println(artifacts[0].Sources[0].Attributes.Paths)

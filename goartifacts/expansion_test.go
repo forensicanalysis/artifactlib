@@ -54,6 +54,9 @@ func TestExpand(t *testing.T) {
 		infs                fslib.FS
 		artifactDefinitions []ArtifactDefinition
 	}
+
+	resolver := &EmptyResolver{}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -62,11 +65,11 @@ func TestExpand(t *testing.T) {
 	}{
 		{
 			"Expand", args{
-				getInFS(),
-				[]ArtifactDefinition{
-					{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/*/bar.bin"}}}}},
-				},
+			getInFS(),
+			[]ArtifactDefinition{
+				{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/*/bar.bin"}}}}},
 			},
+		},
 			[]ArtifactDefinition{
 				{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/dir/bar.bin"}}}}},
 			}, false,
@@ -74,7 +77,7 @@ func TestExpand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Expand(tt.args.infs, tt.args.artifactDefinitions, false)
+			got, err := Expand(tt.args.infs, tt.args.artifactDefinitions, false, resolver)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Expand() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -100,6 +103,8 @@ func Test_expandPath(t *testing.T) {
 		validPath = validPath[:1] + strings.ToUpper(validPath[1:2]) + validPath[2:]
 		invalidPath = invalidPath[:1] + strings.ToUpper(invalidPath[1:2]) + invalidPath[2:]
 	}
+
+	resolver := &EmptyResolver{}
 
 	winfs, err := systemfs.New()
 	if err != nil {
@@ -128,7 +133,8 @@ func Test_expandPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.windowsOnly || runtime.GOOS == "windows" {
-				got, err := expandPath(tt.args.fs, tt.args.in, tt.args.fs.Name() == "OsFs" || tt.args.fs.Name() == "System FS")
+
+				got, err := expandPath(tt.args.fs, tt.args.in, tt.args.fs.Name() == "OsFs" || tt.args.fs.Name() == "System FS", resolver)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -137,6 +143,44 @@ func Test_expandPath(t *testing.T) {
 				if !reflect.DeepEqual(got, tt.want) {
 					t.Error("are you admin?")
 					t.Errorf("expandPath(%s) = %v, want %v", tt.args.in, got, tt.want)
+				}
+			}
+		})
+	}
+}
+
+func Test_expandKey(t *testing.T) {
+	type args struct {
+		s string
+	}
+
+	resolver := &EmptyResolver{}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		windows bool
+	}{
+		{"Expand Star", args{"/*"}, []string{"/HKEY_CLASSES_ROOT", "/HKEY_CURRENT_USER", "/HKEY_LOCAL_MACHINE", "/HKEY_USERS", "/HKEY_CURRENT_CONFIG"}, true},
+		{"Expand Key", args{"/NOKEY"}, []string{}, true},
+		{"Expand HKEY_LOCAL_MACHINE star", args{`/HKEY_LOCAL_MACHINE/*`}, []string{"/HKEY_LOCAL_MACHINE/HARDWARE", "/HKEY_LOCAL_MACHINE/SAM", "/HKEY_LOCAL_MACHINE/SOFTWARE", "/HKEY_LOCAL_MACHINE/SYSTEM"}, true},
+		{"Expand HKEY_LOCAL_MACHINE double star", args{`/HKEY_LOCAL_MACHINE/**`}, []string{"/HKEY_LOCAL_MACHINE/HARDWARE", "/HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control"}, true}, // any many many more keys
+		{"Expand CurrentControlSet star", args{`/HKEY_LOCAL_MACHINE/System/CurrentControlSet/*`}, []string{"/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Enum", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Hardware Profiles", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Policies", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Services", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Software"}, true},
+		{"Expand ComputerName", args{`/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, []string{`/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, true},
+		{"Expand Key", args{"NOKEY"}, []string{}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if (tt.windows && runtime.GOOS == "windows") || (!tt.windows && runtime.GOOS != "windows") {
+				got, err := expandKey(tt.args.s, resolver)
+				if err != nil {
+					t.Error(err)
+				}
+				sort.Strings(got)
+				sort.Strings(tt.want)
+				if !isSubset(got, tt.want) {
+					t.Errorf("expandKey() = %v, want %v", got, tt.want)
 				}
 			}
 		})
@@ -159,4 +203,10 @@ func contains(set []string, elem string) bool {
 		}
 	}
 	return false
+}
+
+type EmptyResolver struct{}
+
+func (r *EmptyResolver) Resolve(s string) ([]string, error) {
+	return []string{s}, nil
 }

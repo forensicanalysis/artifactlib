@@ -48,3 +48,27 @@ func Test_filterOS(t *testing.T) {
 		})
 	}
 }
+
+func Test_isOSArtifactDefinition(t *testing.T) {
+	type args struct {
+		os          string
+		supportedOs []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"Test Windows", args{"Windows", []string{"Windows"}}, true},
+		{"Test Windows", args{"Windows", []string{"Linux", "Darwin"}}, false},
+		{"Test Linux", args{"Linux", []string{"Linux"}}, true},
+		{"Test Darwin", args{"Darwin", []string{"Darwin"}}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isOSArtifactDefinition(tt.args.os, tt.args.supportedOs); got != tt.want {
+				t.Errorf("isOSArtifactDefinition() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

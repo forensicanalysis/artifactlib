@@ -140,3 +140,33 @@ func TestDecoder_Decode(t *testing.T) {
 		})
 	}
 }
+
+func TestDecodeFile(t *testing.T) {
+	type args struct {
+		filename string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []ArtifactDefinition
+		want1   []Flaw
+		wantErr bool
+	}{
+		{"Valid Artifact Definitions", args{"../test/artifacts/valid/mac_os_double_path_3.yaml"}, []ArtifactDefinition{{Name: "Test1Directory", Doc: "Minimal dummy artifact definition for tests", Sources: []Source{{Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/etc", "/private/etc"}}, SupportedOs: []string{"Darwin"}}}}}, nil, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1, err := DecodeFile(tt.args.filename)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecodeFile() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DecodeFile() got = %#v, want %#v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("DecodeFile() got1 = %#v, want %#v", got1, tt.want1)
+			}
+		})
+	}
+}

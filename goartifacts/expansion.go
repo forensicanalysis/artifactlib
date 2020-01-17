@@ -23,35 +23,40 @@ package goartifacts
 
 import (
 	"fmt"
-	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
-	"github.com/forensicanalysis/fslib/filesystem/registryfs"
-	"github.com/forensicanalysis/fslib/forensicfs/glob"
 	"log"
 	"regexp"
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/forensicanalysis/fslib"
+	"github.com/forensicanalysis/fslib/filesystem/osfs"
+	"github.com/forensicanalysis/fslib/filesystem/registryfs"
+	"github.com/forensicanalysis/fslib/forensicfs/glob"
 )
 
+type ParameterResolver interface {
+	Resolve(parameter string) ([]string, error)
+}
+
 // Expand performs parameter expansion and globbing on a list of artifact definitions.
-func Expand(infs fslib.FS, artifactDefinitions []ArtifactDefinition, addPartitions bool) ([]ArtifactDefinition, error) {
+func Expand(infs fslib.FS, artifactDefinitions []ArtifactDefinition, addPartitions bool, resolver ParameterResolver) ([]ArtifactDefinition, error) {
 	for ax, artifactDefinition := range artifactDefinitions {
 		for sx, source := range artifactDefinition.Sources {
-			artifactDefinitions[ax].Sources[sx] = expandSource(source, infs, addPartitions)
+			artifactDefinitions[ax].Sources[sx] = expandSource(source, infs, addPartitions, resolver)
 		}
 	}
 	return artifactDefinitions, nil
 }
 
 // ExpandChannel performs parameter expansion and globbing on a list of artifact definitions.
-func ExpandChannel(sourceChannel chan<- NamedSource, infs fslib.FS, artifactDefinitions []ArtifactDefinition, addPartitions bool) {
+func ExpandChannel(sourceChannel chan<- NamedSource, infs fslib.FS, artifactDefinitions []ArtifactDefinition, addPartitions bool, resolver ParameterResolver) {
 	var wg sync.WaitGroup
 	for ax, artifactDefinition := range artifactDefinitions {
 		wg.Add(1)
 		go func(ax int, artifactDefinition ArtifactDefinition) {
 			for _, source := range artifactDefinition.Sources {
-				sourceChannel <- NamedSource{expandSource(source, infs, addPartitions), artifactDefinition.Name}
+				sourceChannel <- NamedSource{expandSource(source, infs, addPartitions, resolver), artifactDefinition.Name}
 			}
 			wg.Done()
 		}(ax, artifactDefinition)
@@ -59,7 +64,34 @@ func ExpandChannel(sourceChannel chan<- NamedSource, infs fslib.FS, artifactDefi
 	wg.Wait()
 }
 
-func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
+func expandArtifactGroup(names []string, artifactDefinitions map[string]ArtifactDefinition) map[string]ArtifactDefinition {
+	selected := map[string]ArtifactDefinition{}
+	for _, name := range names {
+		artifact, ok := artifactDefinitions[name]
+		if !ok {
+			log.Printf("Artifact Definition %s not found", name)
+			continue
+		}
+
+		onlyGroup := true
+		for _, source := range artifact.Sources {
+			if source.Type == "ARTIFACT_GROUP" {
+				for subName, subArtifact := range expandArtifactGroup(source.Attributes.Names, artifactDefinitions) {
+					selected[subName] = subArtifact
+				}
+			} else {
+				onlyGroup = false
+			}
+		}
+		if !onlyGroup {
+			selected[artifact.Name] = artifact
+		}
+	}
+
+	return selected
+}
+
+func expandSource(source Source, infs fslib.FS, addPartitions bool, resolver ParameterResolver) Source {
 	replacer := strings.NewReplacer("\\", "/", "/", "\\")
 	switch source.Type {
 	case "FILE", "DIRECTORY", "PATH":
@@ -69,7 +101,7 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 			if source.Attributes.Separator == "\\" {
 				path = strings.ReplaceAll(path, "\\", "/")
 			}
-			paths, err := expandPath(infs, path, addPartitions)
+			paths, err := expandPath(infs, path, addPartitions, resolver)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -82,7 +114,7 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 		var expandKeys []string
 		for _, key := range source.Attributes.Keys {
 			key = "/" + replacer.Replace(key)
-			keys, err := expandKey(key)
+			keys, err := expandKey(key, resolver)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -95,7 +127,7 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 		var expandKeyValuePairs []KeyValuePair
 		for _, keyValuePair := range source.Attributes.KeyValuePairs {
 			key := "/" + replacer.Replace(keyValuePair.Key)
-			keys, err := expandKey(key)
+			keys, err := expandKey(key, resolver)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -109,9 +141,12 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 	return source
 }
 
-func expandPath(fs fslib.FS, syspath string, addPartitions bool) ([]string, error) {
+func expandPath(fs fslib.FS, syspath string, addPartitions bool, resolver ParameterResolver) ([]string, error) {
 	// expand vars
-	variablePaths := expandVar(syspath)
+	variablePaths, err := resolver.Resolve(syspath)
+	if err != nil {
+		return nil, err
+	}
 	if len(variablePaths) == 0 {
 		return nil, nil
 	}
@@ -167,9 +202,9 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool) ([]string, erro
 	return unglobedPaths, nil
 }
 
-func expandKey(path string) ([]string, error) {
+func expandKey(path string, resolver ParameterResolver) ([]string, error) {
 	if runtime.GOOS == "windows" {
-		return expandPath(registryfs.New(), path, false)
+		return expandPath(registryfs.New(), path, false, resolver)
 	}
 	return []string{}, nil
 }

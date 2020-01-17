@@ -43,6 +43,8 @@ func TestProcessFiles(t *testing.T) {
 		result[0].Sources = nil
 	}
 
+	resolver := &EmptyResolver{}
+
 	type args struct {
 		infs      fslib.FS
 		filenames []string
@@ -58,7 +60,7 @@ func TestProcessFiles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ProcessFiles(nil, tt.args.infs, false, tt.args.filenames)
+			got, err := ProcessFiles(nil, tt.args.infs, false, tt.args.filenames, resolver)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProcessFiles() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -74,56 +76,5 @@ func TestProcessFiles(t *testing.T) {
 	}
 }
 
-func TestDecodeFile(t *testing.T) {
-	type args struct {
-		filename string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    []ArtifactDefinition
-		want1   []Flaw
-		wantErr bool
-	}{
-		{"Valid Artifact Definitions", args{"../test/artifacts/valid/mac_os_double_path_3.yaml"}, []ArtifactDefinition{{Name: "Test1Directory", Doc: "Minimal dummy artifact definition for tests", Sources: []Source{{Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/etc", "/private/etc"}}, SupportedOs: []string{"Darwin"}}}}}, nil, false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := DecodeFile(tt.args.filename)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DecodeFile() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DecodeFile() got = %#v, want %#v", got, tt.want)
-			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("DecodeFile() got1 = %#v, want %#v", got1, tt.want1)
-			}
-		})
-	}
-}
 
-func Test_isOSArtifactDefinition(t *testing.T) {
-	type args struct {
-		os          string
-		supportedOs []string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{"Test Windows", args{"Windows", []string{"Windows"}}, true},
-		{"Test Windows", args{"Windows", []string{"Linux", "Darwin"}}, false},
-		{"Test Linux", args{"Linux", []string{"Linux"}}, true},
-		{"Test Darwin", args{"Darwin", []string{"Darwin"}}, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := isOSArtifactDefinition(tt.args.os, tt.args.supportedOs); got != tt.want {
-				t.Errorf("isOSArtifactDefinition() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+
