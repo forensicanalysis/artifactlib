@@ -56,6 +56,8 @@ jobs:
       - name: Set system path
         run: echo "##[add-path]$(go env GOPATH)/bin"
         shell: bash
+      - name: Download dependencies
+        run: go mod download
 
       - name: Setup node
         uses: actions/setup-node@v1
@@ -64,12 +66,23 @@ jobs:
         run: npm install -g bats
 
       - name: Build
-        run: go install .
+        run: |
+          go build .
+          go install .
+          mkdir bin
+          mv artifact* bin
         working-directory: ./cmd/artifactvalidator
         shell: bash
+
       - name: Bats test
         run: bats test/bats/artifactvalidator.bats
         shell: bash
+
+      - name: Upload
+        uses: actions/upload-artifact@master
+        with:
+          name: artifactvalidator ${{ matrix.os }}
+          path: ./cmd/artifactvalidator/bin
 
   pyartifacts:
     name: pyartifacts
@@ -79,35 +92,35 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
         python-version: [3.6, 3.7, 3.8]
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - run: pip install .
-    - run: pip install pylint pytest pytest-cov
-    - run: pylint pyartifacts --rcfile test/.pylintrc
-    - run: pytest -v --cov-config .coveragerc --cov-report=xml --cov=pyartifacts test/test_reader.py
-      shell: bash
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install .
+      - run: pip install pylint pytest pytest-cov
+      - run: pylint pyartifacts --rcfile test/.pylintrc
+      - run: pytest -v --cov-config .coveragerc --cov-report=xml --cov=pyartifacts test/test_reader.py
+        shell: bash
 
-    - name: Upload coverage
-      env:
-        CI: "true"
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      run: bash <(curl -s https://codecov.io/bash) -F python
-      if: matrix.os == 'windows-latest' && matrix.python-version == 3.8
-      shell: bash
+      - name: Upload coverage
+        env:
+          CI: "true"
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: bash <(curl -s https://codecov.io/bash) -F python
+        if: matrix.os == 'windows-latest' && matrix.python-version == 3.8
+        shell: bash
 
-    - name: Python Documentation
-      run: |
-        pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
-        sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
-    - run: touch public/.nojekyll
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
-    - name: Build and Deploy
-      uses: peaceiris/actions-gh-pages@v2
-      env:
-        ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-        PUBLISH_BRANCH: gh-pages
-        PUBLISH_DIR: public
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
+      - name: Python Documentation
+        run: |
+          pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
+          sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
+      - run: touch public/.nojekyll
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
+      - name: Build and Deploy
+        uses: peaceiris/actions-gh-pages@v2
+        env:
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: public
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
