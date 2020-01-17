@@ -56,8 +56,6 @@ jobs:
       - name: Set system path
         run: echo "##[add-path]$(go env GOPATH)/bin"
         shell: bash
-      - name: Download dependencies
-        run: go mod download
 
       - name: Setup node
         uses: actions/setup-node@v1
@@ -66,23 +64,22 @@ jobs:
         run: npm install -g bats
 
       - name: Build
-        run: |
-          go build .
-          go install .
-          mkdir bin
-          mv artifact* bin
+        run: go install .
         working-directory: ./cmd/artifactvalidator
         shell: bash
+      #    go build .
+      #    mkdir bin
+      #    mv artifact* bin
 
       - name: Bats test
         run: bats test/bats/artifactvalidator.bats
         shell: bash
 
-      - name: Upload
-        uses: actions/upload-artifact@master
-        with:
-          name: artifactvalidator ${{ matrix.os }}
-          path: ./cmd/artifactvalidator/bin
+      # - name: Upload
+      #   uses: actions/upload-artifact@master
+      #   with:
+      #     name: artifactvalidator ${{ matrix.os }}
+      #     path: ./cmd/artifactvalidator/bin
 
   pyartifacts:
     name: pyartifacts
