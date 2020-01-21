@@ -245,7 +245,6 @@ func Test_recursiveResolve(t *testing.T) {
 type XXXResolver struct{}
 
 func (r *XXXResolver) Resolve(s string) ([]string, error) {
-	fmt.Println(s)
 	switch s {
 	case "foo":
 		return []string{"xxx", "yyy"}, nil

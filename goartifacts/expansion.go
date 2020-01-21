@@ -210,7 +210,6 @@ func expandKey(path string, resolver ParameterResolver) ([]string, error) {
 }
 
 func recursiveResolve(s string, resolver ParameterResolver) ([]string, error) {
-	fmt.Println("recursiveResolve", s)
 	parameterCache := map[string][]string{}
 
 	var re = regexp.MustCompile(`%?%(.*?)%?%`)
@@ -223,7 +222,6 @@ func recursiveResolve(s string, resolver ParameterResolver) ([]string, error) {
 				replacedParameters = append(replacedParameters, replaces(re, s, cacheResult)...)
 			} else {
 				resolves, err := resolver.Resolve(match[1])
-				fmt.Println("resolves", resolves)
 				if err != nil {
 					return nil, err
 				}
