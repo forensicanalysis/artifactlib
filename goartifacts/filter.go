@@ -66,3 +66,12 @@ func isOSArtifactDefinition(os string, supportedOs []string) bool {
 	}
 	return false
 }
+
+func getSupportedOS(definition ArtifactDefinition, source Source) []string {
+	if len(source.SupportedOs) > 0 {
+		return source.SupportedOs
+	} else if len(definition.SupportedOs) > 0 {
+		return definition.SupportedOs
+	}
+	return listOSS()
+}

@@ -24,11 +24,13 @@ package goartifacts
 import (
 	"bufio"
 	"fmt"
-	"github.com/looplab/tarjan"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/looplab/tarjan"
 )
 
 // Severity level of a flaw.
@@ -134,8 +136,6 @@ func (r *validator) validateArtifactDefinition(filename string, artifactDefiniti
 	r.validateNamePrefix(filename, artifactDefinition)
 	r.validateOSSpecific(filename, artifactDefinition)
 	r.validateArtifactOS(filename, artifactDefinition)
-	// r.validateArtifactLabels(filename, artifactDefinition)
-	r.validateProvides(filename, artifactDefinition)
 	if isOSArtifactDefinition(supportedOS.Darwin, artifactDefinition.SupportedOs) {
 		r.validateMacOSDoublePath(filename, artifactDefinition)
 	}
@@ -282,18 +282,56 @@ func (r *validator) validateGroupMemberExist(artifactDefinitions []ArtifactDefin
 }
 
 func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDefinition) {
-	var knownProvides = map[string]string{}
+	parametersRequired := map[string]map[string]string{
+		"Windows": {},
+		"Darwin":  {},
+		"Linux":   {},
+	}
+	var regex = regexp.MustCompile(`%?%(.*?)%?%`)
+
 	for _, artifactDefinition := range artifactDefinitions {
-		for _, provide := range artifactDefinition.Provides {
-			knownProvides[provide] = artifactDefinition.Name
+		for _, source := range artifactDefinition.Sources {
+			for _, path := range source.Attributes.Paths {
+				for _, match := range regex.FindAllStringSubmatch(path, -1) {
+					for _, operatingSystem := range getSupportedOS(artifactDefinition, source) {
+						parametersRequired[operatingSystem][match[1]] = artifactDefinition.Name
+					}
+				}
+			}
+
+			for _, key := range source.Attributes.Keys {
+				for _, match := range regex.FindAllStringSubmatch(key, -1) {
+					for _, operatingSystem := range getSupportedOS(artifactDefinition, source) {
+						parametersRequired[operatingSystem][match[1]] = artifactDefinition.Name
+					}
+				}
+			}
 		}
 	}
 
-	/* for parameter := range knowledgeBase {
-		if val, ok := knownProvides[parameter]; !ok {
-			r.addInfo("", val, "Parameter %s is not provided", parameter)
+	var knownProvides = map[string]map[string]string{
+		"Windows": {},
+		"Darwin":  {},
+		"Linux":   {},
+	}
+
+	for _, artifactDefinition := range artifactDefinitions {
+		for _, source := range artifactDefinition.Sources {
+			for _, provide := range source.Provides {
+				for _, operatingSystem := range getSupportedOS(artifactDefinition, source) {
+					knownProvides[operatingSystem][provide.Key] = artifactDefinition.Name
+				}
+			}
 		}
-	}*/
+	}
+
+	for operatingSystem := range parametersRequired {
+		for parameter := range parametersRequired[operatingSystem] {
+			if _, ok := knownProvides[operatingSystem][parameter]; !ok {
+				r.addWarning("", parametersRequired[operatingSystem][parameter], "Parameter %s is not provided for %s", parameter, operatingSystem)
+			}
+		}
+	}
 }
 
 // file
@@ -405,14 +443,6 @@ func (r *validator) validateArtifactOS(filename string, artifactDefinition Artif
 			r.addWarning(filename, artifactDefinition.Name, "OS %s is not valid", supportedos)
 		}
 	}
-}
-
-func (r *validator) validateProvides(filename string, artifactDefinition ArtifactDefinition) {
-	// for _, provides := range artifactDefinition.Provides {
-	// 	if _, ok := knowledgeBase[provides]; !ok {
-	// 		r.addWarning(filename, artifactDefinition.Name, "Unused provides %s", provides)
-	// 	}
-	// }
 }
 
 func (r *validator) validateMacOSDoublePath(filename string, artifactDefinition ArtifactDefinition) {

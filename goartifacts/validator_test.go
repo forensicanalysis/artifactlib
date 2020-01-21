@@ -297,3 +297,40 @@ func TestValidator_validateNamePrefix(t *testing.T) {
 		})
 	}
 }
+
+func Test_validator_validateParametersProvided(t *testing.T) {
+	r := newValidator()
+
+	tests := []struct {
+		name     string
+		testfile string
+		want     []Flaw
+	}{
+		{"No provides 1", "not_provided_1.yaml", []Flaw{
+			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Windows", "TestProvided", ""},
+			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Linux", "TestProvided", ""},
+			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Darwin", "TestProvided", ""},
+		}},
+		{"No provides 2", "not_provided_2.yaml", []Flaw{
+			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Windows", "TestProvided2", ""},
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ads, flaws, err := DecodeFile(filepath.Join("..", "test", "artifacts", "invalid", tt.testfile))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(flaws) >0 {
+				t.Fatal(flaws)
+			}
+
+			r.validateParametersProvided(ads)
+
+			if !flawsEqual(r.flaws, tt.want) {
+				t.Errorf("validateParametersProvided() = %v, want %v (%s)", r.flaws, tt.want, tt.testfile)
+			}
+			r.flaws = []Flaw{}
+		})
+	}
+}

@@ -22,6 +22,8 @@
 package goartifacts
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"runtime"
 	"sort"
@@ -209,4 +211,46 @@ type EmptyResolver struct{}
 
 func (r *EmptyResolver) Resolve(s string) ([]string, error) {
 	return []string{s}, nil
+}
+
+func Test_recursiveResolve(t *testing.T) {
+	type args struct {
+		s        string
+		resolver ParameterResolver
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantOut []string
+		wantErr bool
+	}{
+		{"Plain resolve", args{"asd%%foo%%bar", &XXXResolver{}}, []string{"asdxxxbar", "asdyyybar"}, false},
+		{"Recursive resolve", args{"asd%%faz%%bar", &XXXResolver{}}, []string{"asdxxxbar", "asdyyybar"}, false},
+		{"Fail resolve", args{"asd%%far%%bar", &XXXResolver{}}, nil, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotOut, err := recursiveResolve(tt.args.s, tt.args.resolver)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("recursiveResolve() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotOut, tt.wantOut) {
+				t.Errorf("recursiveResolve() gotOut = %v, want %v", gotOut, tt.wantOut)
+			}
+		})
+	}
+}
+
+type XXXResolver struct{}
+
+func (r *XXXResolver) Resolve(s string) ([]string, error) {
+	fmt.Println(s)
+	switch s {
+	case "foo":
+		return []string{"xxx", "yyy"}, nil
+	case "faz":
+		return []string{"%foo%"}, nil
+	}
+	return nil, errors.New("could not resolve")
 }

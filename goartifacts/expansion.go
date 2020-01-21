@@ -143,7 +143,7 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool, resolver Par
 
 func expandPath(fs fslib.FS, syspath string, addPartitions bool, resolver ParameterResolver) ([]string, error) {
 	// expand vars
-	variablePaths, err := resolver.Resolve(syspath)
+	variablePaths, err := recursiveResolve(syspath, resolver)
 	if err != nil {
 		return nil, err
 	}
@@ -207,4 +207,48 @@ func expandKey(path string, resolver ParameterResolver) ([]string, error) {
 		return expandPath(registryfs.New(), path, false, resolver)
 	}
 	return []string{}, nil
+}
+
+func recursiveResolve(s string, resolver ParameterResolver) ([]string, error) {
+	fmt.Println("recursiveResolve", s)
+	parameterCache := map[string][]string{}
+
+	var re = regexp.MustCompile(`%?%(.*?)%?%`)
+	matches := re.FindAllStringSubmatch(s, -1)
+
+	if len(matches) > 0 {
+		var replacedParameters []string
+		for _, match := range matches {
+			if cacheResult, ok := parameterCache[match[1]]; ok {
+				replacedParameters = append(replacedParameters, replaces(re, s, cacheResult)...)
+			} else {
+				resolves, err := resolver.Resolve(match[1])
+				fmt.Println("resolves", resolves)
+				if err != nil {
+					return nil, err
+				}
+
+				replacedParameters = append(replacedParameters, replaces(re, s, resolves)...)
+				parameterCache[match[1]] = resolves
+			}
+		}
+		var results []string
+		for _, result := range replacedParameters {
+			childResults, err := recursiveResolve(result, resolver)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, childResults...)
+		}
+		return results, nil
+	} else {
+		return []string{s}, nil
+	}
+}
+
+func replaces(regex *regexp.Regexp, s string, news []string) (ss []string) {
+	for _, newString := range news {
+		ss = append(ss, regex.ReplaceAllString(s, newString))
+	}
+	return
 }
