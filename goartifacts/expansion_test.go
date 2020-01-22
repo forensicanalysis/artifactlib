@@ -50,41 +50,6 @@ func getInFS() fslib.FS {
 	return infs
 }
 
-func TestExpand(t *testing.T) {
-	type args struct {
-		infs                fslib.FS
-		artifactDefinitions []ArtifactDefinition
-	}
-
-	tests := []struct {
-		name    string
-		args    args
-		want    map[string][]Source
-		wantErr bool
-	}{
-		{
-			"Expand", args{
-			getInFS(),
-			[]ArtifactDefinition{
-				{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/*/bar.bin"}}}}},
-			},
-		},
-			map[string][]Source{
-				"": {{Type: "FILE", Attributes: Attributes{Paths: []string{"/dir/bar.bin"}}}},
-			}, false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resolver := &TestCollector{tt.args.infs, nil}
-			Collect(tt.args.artifactDefinitions, resolver)
-
-			if !reflect.DeepEqual(resolver.Collected, tt.want) {
-				t.Errorf("Expand() = %#v, want %#v", resolver.Collected, tt.want)
-			}
-		})
-	}
-}
 
 func Test_expandPath(t *testing.T) {
 	validPath, err := osfs.ToForensicPath("../test/artifacts/valid")

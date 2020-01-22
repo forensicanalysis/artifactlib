@@ -22,9 +22,10 @@
 package goartifacts
 
 import (
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 // DecodeFile takes a single artifact definition file to decode.
@@ -55,6 +56,22 @@ func DecodeFile(filename string) ([]ArtifactDefinition, []Flaw, error) {
 	}
 
 	return artifactDefinitions, flaws, nil
+}
+
+// DecodeFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.
+func DecodeFiles(filenames []string) ([]ArtifactDefinition, error) {
+	var artifactDefinitions []ArtifactDefinition
+
+	// decode file
+	for _, filename := range filenames {
+		ads, _, err := DecodeFile(filename)
+		if err != nil {
+			return nil, err
+		}
+		artifactDefinitions = append(artifactDefinitions, ads...)
+	}
+
+	return artifactDefinitions, nil
 }
 
 // A Decoder reads and decodes YAML values from an input stream.

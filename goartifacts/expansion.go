@@ -23,42 +23,16 @@ package goartifacts
 
 import (
 	"fmt"
+	"github.com/forensicanalysis/fslib"
+	"github.com/forensicanalysis/fslib/filesystem/osfs"
+	"github.com/forensicanalysis/fslib/forensicfs/glob"
 	"log"
 	"regexp"
 	"runtime"
 	"strings"
-	"sync"
-
-	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
-	"github.com/forensicanalysis/fslib/forensicfs/glob"
 )
 
-type ArtifactCollector interface {
-	Resolve(parameter string) ([]string, error)
-	Collect(name string, source Source)
-
-	FS() fslib.FS
-	Registry() fslib.FS
-	AddPartitions() bool
-}
-
-// Collect performs parameter expansion and globbing on a list of artifact definitions.
-func Collect(artifactDefinitions []ArtifactDefinition, collector ArtifactCollector) {
-	var wg sync.WaitGroup
-	for ax, artifactDefinition := range artifactDefinitions {
-		wg.Add(1)
-		go func(ax int, artifactDefinition ArtifactDefinition) {
-			for _, source := range artifactDefinition.Sources {
-				collector.Collect(artifactDefinition.Name, expandSource(source, collector))
-			}
-			wg.Done()
-		}(ax, artifactDefinition)
-	}
-	wg.Wait()
-}
-
-func expandSource(source Source, collector ArtifactCollector) Source {
+func ExpandSource(source Source, collector ArtifactCollector) Source {
 	replacer := strings.NewReplacer("\\", "/", "/", "\\")
 	switch source.Type {
 	case "FILE", "DIRECTORY", "PATH":
@@ -150,7 +124,7 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector Artif
 		if addPartitions {
 			forensicPath, err := osfs.ToForensicPath(variablePath)
 			if err != nil {
-				return nil,  err
+				return nil, err
 			}
 			forensicPaths = append(forensicPaths, forensicPath)
 		} else {
@@ -161,14 +135,14 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector Artif
 	// Test if variable path starts with e.g. C:/; need to be done after variable replacement
 	isAbsPath, err := regexp.MatchString(`[a-zA-Z]:/`, variablePaths[0])
 	if err != nil {
-		return nil,  err
+		return nil, err
 	}
 
 	var partitionPaths []string
 	if runtime.GOOS == "windows" && addPartitions && !isAbsPath {
 		partitions, err := listPartitions()
 		if err != nil {
-			return nil,  err
+			return nil, err
 		}
 		for _, forensicPath := range forensicPaths {
 			for _, partition := range partitions {

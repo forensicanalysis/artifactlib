@@ -26,7 +26,7 @@ import (
 	"strings"
 )
 
-func filterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
+func FilterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	var selected []ArtifactDefinition
 	for _, artifactDefinition := range artifactDefinitions {
 		if isOSArtifactDefinition(runtime.GOOS, artifactDefinition.SupportedOs) {
@@ -43,7 +43,7 @@ func filterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	return selected
 }
 
-func filterName(names []string, artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
+func FilterName(names []string, artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	artifactDefinitionMap := map[string]ArtifactDefinition{}
 	for _, artifactDefinition := range artifactDefinitions {
 		artifactDefinitionMap[artifactDefinition.Name] = artifactDefinition

@@ -36,14 +36,14 @@ func Test_filterOS(t *testing.T) {
 		args args
 		want []ArtifactDefinition
 	}{
-		{"filterOS true", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{runtime.GOOS}}}}, []ArtifactDefinition{{Name: "Test", Sources: nil, SupportedOs: []string{runtime.GOOS}}}},
-		{"filterOS sources", args{[]ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}, {SupportedOs: []string{"xxx"}}}}}}, []ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}}}}},
-		{"filterOS false", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{"xxx"}}}}, nil},
+		{"FilterOS true", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{runtime.GOOS}}}}, []ArtifactDefinition{{Name: "Test", Sources: nil, SupportedOs: []string{runtime.GOOS}}}},
+		{"FilterOS sources", args{[]ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}, {SupportedOs: []string{"xxx"}}}}}}, []ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}}}}},
+		{"FilterOS false", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{"xxx"}}}}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := filterOS(tt.args.artifactDefinitions); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("filterOS() = %#v, want %#v", got, tt.want)
+			if got := FilterOS(tt.args.artifactDefinitions); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FilterOS() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}

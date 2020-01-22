@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Siemens AG
+// Copyright (c) 2020 Siemens AG
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -21,34 +21,43 @@
 
 package goartifacts
 
-// ProcessFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.
-func ProcessFiles(artifacts []string, filenames []string, collector ArtifactCollector) error {
-	var artifactDefinitions []ArtifactDefinition
+import (
+	"errors"
+	"github.com/forensicanalysis/fslib"
+)
 
-	// decode file
-	for _, filename := range filenames {
-		ads, _, err := DecodeFile(filename)
-		if err != nil {
-			return err
-		}
-		artifactDefinitions = append(artifactDefinitions, ads...)
-	}
-
-	return ProcessArtifacts(artifacts, artifactDefinitions, collector)
+type TestCollector struct {
+	fs        fslib.FS
+	Collected map[string][]Source
 }
 
-// ProcessArtifacts takes a list of artifact definitions. Those artifact definitions are filtered and expanded.
-func ProcessArtifacts(artifacts []string, artifactDefinitions []ArtifactDefinition, collector ArtifactCollector) error {
-	// select from entrypoint
-	if artifacts != nil {
-		artifactDefinitions = filterName(artifacts, artifactDefinitions)
+func (r *TestCollector) Collect(name string, source Source) {
+	source = ExpandSource(source, r)
+
+	if r.Collected == nil {
+		r.Collected = map[string][]Source{}
 	}
+	r.Collected[name] = append(r.Collected[name], source)
+}
 
-	// select supported os
-	artifactDefinitions = filterOS(artifactDefinitions)
+func (r *TestCollector) FS() fslib.FS {
+	return r.fs
+}
 
-	// expand and glob
-	Collect(artifactDefinitions, collector)
+func (r *TestCollector) Registry() fslib.FS {
+	return r.fs
+}
 
-	return nil
+func (r *TestCollector) AddPartitions() bool {
+	return false
+}
+
+func (r *TestCollector) Resolve(s string) ([]string, error) {
+	switch s {
+	case "foo":
+		return []string{"xxx", "yyy"}, nil
+	case "faz":
+		return []string{"%foo%"}, nil
+	}
+	return nil, errors.New("could not resolve")
 }
