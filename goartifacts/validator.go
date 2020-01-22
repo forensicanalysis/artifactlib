@@ -352,27 +352,27 @@ func (r *validator) validateNamePrefix(filename string, artifactDefinition Artif
 }
 
 func (r *validator) validateOSSpecific(filename string, artifactDefinition ArtifactDefinition) {
-	os := ""
+	operatingSystem := ""
 	if strings.HasPrefix(filepath.Base(filename), "windows") {
-		os = supportedOS.Windows
+		operatingSystem = supportedOS.Windows
 	} else if strings.HasPrefix(filepath.Base(filename), "linux") {
-		os = supportedOS.Linux
+		operatingSystem = supportedOS.Linux
 	} else if strings.HasPrefix(filepath.Base(filename), "macos") {
-		os = supportedOS.Darwin
+		operatingSystem = supportedOS.Darwin
 	}
-	if os == "" {
+	if operatingSystem == "" {
 		return
 	}
 
 	for _, supportedOs := range artifactDefinition.SupportedOs {
-		if supportedOs != os {
-			r.addInfo(filename, artifactDefinition.Name, "File should only contain %s artifact definitions", os)
+		if supportedOs != operatingSystem {
+			r.addInfo(filename, artifactDefinition.Name, "File should only contain %s artifact definitions", operatingSystem)
 		}
 	}
 	for _, source := range artifactDefinition.Sources {
 		for _, supportedOs := range source.SupportedOs {
-			if supportedOs != os {
-				r.addInfo(filename, artifactDefinition.Name, "File should only contain %s artifact definitions", os)
+			if supportedOs != operatingSystem {
+				r.addInfo(filename, artifactDefinition.Name, "File should only contain %s artifact definitions", operatingSystem)
 			}
 		}
 	}

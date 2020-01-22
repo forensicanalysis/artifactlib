@@ -22,52 +22,49 @@
 package goartifacts
 
 import (
-	"github.com/forensicanalysis/fslib"
 	"reflect"
 	"runtime"
 	"testing"
 
+	"github.com/forensicanalysis/fslib"
 	"github.com/forensicanalysis/fslib/filesystem/osfs"
 )
 
 func TestProcessFiles(t *testing.T) {
-	result := []ArtifactDefinition{{
-		Name: "Test3Directory",
-		Doc:  "Minimal dummy artifact definition for tests",
-		Sources: []Source{{
+	result := map[string][]Source{
+		"Test3Directory": {{
 			Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/dev"}}, SupportedOs: []string{"Darwin", "Linux"},
 		}},
-	}}
-
-	if runtime.GOOS == "windows" {
-		result[0].Sources = nil
 	}
 
-	resolver := &EmptyResolver{}
+	if runtime.GOOS == "windows" {
+		result = nil
+	}
 
 	type args struct {
 		infs      fslib.FS
 		filenames []string
 	}
 	tests := []struct {
-		name      string
-		args      args
-		want      []ArtifactDefinition
-		wantFlaws []Flaw
-		wantErr   bool
+		name    string
+		args    args
+		want    map[string][]Source
+		wantErr bool
 	}{
-		{"Valid Artifact Definitions", args{osfs.New(), []string{"../test/artifacts/valid/processing.yaml"}}, result, []Flaw{}, false},
+		{"Valid Artifact Definitions", args{osfs.New(), []string{"../test/artifacts/valid/processing.yaml"}}, result, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ProcessFiles(nil, tt.args.infs, false, tt.args.filenames, resolver)
+			collector := &TestCollector{tt.args.infs, nil}
+
+			err := ProcessFiles(nil, tt.args.filenames, collector)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProcessFiles() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ProcessFiles() got = %#v, want %#v", got, tt.want)
+			if !reflect.DeepEqual(collector.Collected, tt.want) {
+				t.Errorf("ProcessFiles() got = %#v, want %#v", collector.Collected, tt.want)
 			}
 			// if !reflect.DeepEqual(got1, tt.wantFlaws) {
 			// 	t.Errorf("ProcessFiles() got1 = %v, want %v", got1, tt.wantFlaws)
@@ -75,6 +72,3 @@ func TestProcessFiles(t *testing.T) {
 		})
 	}
 }
-
-
-

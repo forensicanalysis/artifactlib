@@ -65,7 +65,7 @@ go get -u github.com/forensicanalysis/artifactlib
 
 ### Usage
 
-
+<!--
 ### ProcessArtifacts
 ```go
 package main
@@ -106,9 +106,10 @@ func main() {
 }
 
 ```
+-->
 
 
-### Validate
+#### Validate
 ```go
 package main
 

@@ -22,7 +22,7 @@
 package goartifacts
 
 import (
-	"errors"
+	"github.com/forensicanalysis/fslib/filesystem/registryfs"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -56,12 +56,10 @@ func TestExpand(t *testing.T) {
 		artifactDefinitions []ArtifactDefinition
 	}
 
-	resolver := &EmptyResolver{}
-
 	tests := []struct {
 		name    string
 		args    args
-		want    []ArtifactDefinition
+		want    map[string][]Source
 		wantErr bool
 	}{
 		{
@@ -71,20 +69,18 @@ func TestExpand(t *testing.T) {
 				{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/*/bar.bin"}}}}},
 			},
 		},
-			[]ArtifactDefinition{
-				{Sources: []Source{{Type: "FILE", Attributes: Attributes{Paths: []string{"/dir/bar.bin"}}}}},
+			map[string][]Source{
+				"": {{Type: "FILE", Attributes: Attributes{Paths: []string{"/dir/bar.bin"}}}},
 			}, false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Expand(tt.args.infs, tt.args.artifactDefinitions, false, resolver)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Expand() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Expand() = %#v, want %#v", got, tt.want)
+			resolver := &TestCollector{tt.args.infs, nil}
+			Collect(tt.args.artifactDefinitions, resolver)
+
+			if !reflect.DeepEqual(resolver.Collected, tt.want) {
+				t.Errorf("Expand() = %#v, want %#v", resolver.Collected, tt.want)
 			}
 		})
 	}
@@ -105,7 +101,7 @@ func Test_expandPath(t *testing.T) {
 		invalidPath = invalidPath[:1] + strings.ToUpper(invalidPath[1:2]) + invalidPath[2:]
 	}
 
-	resolver := &EmptyResolver{}
+	resolver := &TestCollector{}
 
 	winfs, err := systemfs.New()
 	if err != nil {
@@ -135,6 +131,8 @@ func Test_expandPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.windowsOnly || runtime.GOOS == "windows" {
 
+				resolver.fs = tt.args.fs
+
 				got, err := expandPath(tt.args.fs, tt.args.in, tt.args.fs.Name() == "OsFs" || tt.args.fs.Name() == "System FS", resolver)
 				if err != nil {
 					t.Fatal(err)
@@ -155,7 +153,7 @@ func Test_expandKey(t *testing.T) {
 		s string
 	}
 
-	resolver := &EmptyResolver{}
+	resolver := &TestCollector{registryfs.New(), nil}
 
 	tests := []struct {
 		name    string
@@ -206,16 +204,10 @@ func contains(set []string, elem string) bool {
 	return false
 }
 
-type EmptyResolver struct{}
-
-func (r *EmptyResolver) Resolve(s string) ([]string, error) {
-	return []string{s}, nil
-}
-
 func Test_recursiveResolve(t *testing.T) {
 	type args struct {
-		s        string
-		resolver ParameterResolver
+		s         string
+		collector ArtifactCollector
 	}
 	tests := []struct {
 		name    string
@@ -223,13 +215,13 @@ func Test_recursiveResolve(t *testing.T) {
 		wantOut []string
 		wantErr bool
 	}{
-		{"Plain resolve", args{"asd%%foo%%bar", &XXXResolver{}}, []string{"asdxxxbar", "asdyyybar"}, false},
-		{"Recursive resolve", args{"asd%%faz%%bar", &XXXResolver{}}, []string{"asdxxxbar", "asdyyybar"}, false},
-		{"Fail resolve", args{"asd%%far%%bar", &XXXResolver{}}, nil, true},
+		{"Plain resolve", args{"asd%%foo%%bar", &TestCollector{}}, []string{"asdxxxbar", "asdyyybar"}, false},
+		{"Recursive resolve", args{"asd%%faz%%bar", &TestCollector{}}, []string{"asdxxxbar", "asdyyybar"}, false},
+		{"Fail resolve", args{"asd%%far%%bar", &TestCollector{}}, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotOut, err := recursiveResolve(tt.args.s, tt.args.resolver)
+			gotOut, err := recursiveResolve(tt.args.s, tt.args.collector)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("recursiveResolve() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -239,18 +231,6 @@ func Test_recursiveResolve(t *testing.T) {
 			}
 		})
 	}
-}
-
-type XXXResolver struct{}
-
-func (r *XXXResolver) Resolve(s string) ([]string, error) {
-	switch s {
-	case "foo":
-		return []string{"xxx", "yyy"}, nil
-	case "faz":
-		return []string{"%foo%"}, nil
-	}
-	return nil, errors.New("could not resolve")
 }
 
 func Test_replaces(t *testing.T) {

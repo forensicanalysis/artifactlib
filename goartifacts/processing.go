@@ -21,45 +21,24 @@
 
 package goartifacts
 
-import (
-	"fmt"
-	"github.com/forensicanalysis/fslib"
-)
-
-// NamedSource wraps a Source to add the artifact name
-type NamedSource struct {
-	Source
-	Name string
-}
-
 // ProcessFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.
-func ProcessFiles(artifacts []string, infs fslib.FS, addPartitions bool, filenames []string, resolver ParameterResolver) (artifactDefinitions []ArtifactDefinition, err error) {
+func ProcessFiles(artifacts []string, filenames []string, collector ArtifactCollector) error {
+	var artifactDefinitions []ArtifactDefinition
 
 	// decode file
 	for _, filename := range filenames {
 		ads, _, err := DecodeFile(filename)
 		if err != nil {
-			return artifactDefinitions, err
+			return err
 		}
 		artifactDefinitions = append(artifactDefinitions, ads...)
 	}
 
-	// select from entrypoint
-	if artifacts != nil {
-		artifactDefinitions = filterName(artifacts, artifactDefinitions)
-	}
-
-	// select supported os
-	artifactDefinitions = filterOS(artifactDefinitions)
-
-	// expand and glob
-	artifactDefinitions, err = Expand(infs, artifactDefinitions, addPartitions, resolver)
-
-	return artifactDefinitions, err
+	return ProcessArtifacts(artifacts, artifactDefinitions, collector)
 }
 
-// ParallelProcessArtifacts takes a list of artifact definitions. Those artifact definitions are filtered and expanded.
-func ParallelProcessArtifacts(artifacts []string, infs fslib.FS, addPartitions bool, artifactDefinitions []ArtifactDefinition, resolver ParameterResolver) (<-chan NamedSource, int, error) {
+// ProcessArtifacts takes a list of artifact definitions. Those artifact definitions are filtered and expanded.
+func ProcessArtifacts(artifacts []string, artifactDefinitions []ArtifactDefinition, collector ArtifactCollector) error {
 	// select from entrypoint
 	if artifacts != nil {
 		artifactDefinitions = filterName(artifacts, artifactDefinitions)
@@ -68,56 +47,8 @@ func ParallelProcessArtifacts(artifacts []string, infs fslib.FS, addPartitions b
 	// select supported os
 	artifactDefinitions = filterOS(artifactDefinitions)
 
-	sourceCount := 0
-	for _, a := range artifactDefinitions {
-		sourceCount += len(a.Sources)
-	}
-
-	sourceChannel := make(chan NamedSource, 100)
 	// expand and glob
-	go func() {
-		ExpandChannel(sourceChannel, infs, artifactDefinitions, addPartitions, resolver)
-		close(sourceChannel)
-	}()
-	return sourceChannel, sourceCount, nil
-}
+	Collect(artifactDefinitions, collector)
 
-// ParallelProcessFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.
-func ParallelProcessFiles(artifacts []string, infs fslib.FS, addPartitions bool, filenames []string, resolver ParameterResolver) (<-chan NamedSource, int, error) {
-	artifactDefinitionMap := map[string][]ArtifactDefinition{}
-	var artifactDefinitions []ArtifactDefinition
-
-	// decode file
-	for _, filename := range filenames {
-		ads, flaws, err := DecodeFile(filename)
-		if err != nil {
-			return nil, 0, err
-		}
-		if len(flaws) > 0 {
-			fmt.Println(flaws)
-		}
-		artifactDefinitions = append(artifactDefinitions, ads...)
-		artifactDefinitionMap[filename] = ads
-	}
-
-	// select from entrypoint
-	if artifacts != nil {
-		artifactDefinitions = filterName(artifacts, artifactDefinitions)
-	}
-
-	// select supported os
-	artifactDefinitions = filterOS(artifactDefinitions)
-
-	sourceCount := 0
-	for _, a := range artifactDefinitions {
-		sourceCount += len(a.Sources)
-	}
-
-	sourceChannel := make(chan NamedSource, 100)
-	// expand and glob
-	go func() {
-		ExpandChannel(sourceChannel, infs, artifactDefinitions, addPartitions, resolver)
-		close(sourceChannel)
-	}()
-	return sourceChannel, sourceCount, nil
+	return nil
 }
