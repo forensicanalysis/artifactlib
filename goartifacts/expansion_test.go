@@ -24,6 +24,7 @@ package goartifacts
 import (
 	"errors"
 	"reflect"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -250,4 +251,27 @@ func (r *XXXResolver) Resolve(s string) ([]string, error) {
 		return []string{"%foo%"}, nil
 	}
 	return nil, errors.New("could not resolve")
+}
+
+func Test_replaces(t *testing.T) {
+	var re = regexp.MustCompile(`a`)
+	type args struct {
+		s    string
+		news []string
+	}
+	tests := []struct {
+		name   string
+		args   args
+		wantSs []string
+	}{
+		{"Replace single", args{"faa", []string{"o"}}, []string{"foo"}},
+		{"Replace multi", args{"bar", []string{"aa", "uu"}}, []string{"baar", "buur"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotSs := replaces(re, tt.args.s, tt.args.news); !reflect.DeepEqual(gotSs, tt.wantSs) {
+				t.Errorf("replaces() = %v, want %v", gotSs, tt.wantSs)
+			}
+		})
+	}
 }
