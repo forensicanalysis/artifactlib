@@ -23,7 +23,6 @@ package goartifacts
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"runtime"
 	"sort"
@@ -33,7 +32,6 @@ import (
 	"github.com/forensicanalysis/fslib"
 	"github.com/forensicanalysis/fslib/filesystem/osfs"
 	"github.com/forensicanalysis/fslib/filesystem/systemfs"
-
 	"github.com/forensicanalysis/fslib/filesystem/testfs"
 )
 
