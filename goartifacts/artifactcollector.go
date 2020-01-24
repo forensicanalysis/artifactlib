@@ -23,7 +23,6 @@ package goartifacts
 
 import (
 	"github.com/forensicanalysis/fslib"
-	"sync"
 )
 
 type ArtifactCollector interface {
@@ -33,18 +32,4 @@ type ArtifactCollector interface {
 	FS() fslib.FS
 	Registry() fslib.FS
 	AddPartitions() bool
-}
-
-func CollectAll(collector ArtifactCollector, artifactDefinitions []ArtifactDefinition) {
-	var wg sync.WaitGroup
-	for ax, artifactDefinition := range artifactDefinitions {
-		wg.Add(1)
-		go func(ax int, artifactDefinition ArtifactDefinition) {
-			for _, source := range artifactDefinition.Sources {
-				collector.Collect(artifactDefinition.Name, source)
-			}
-			wg.Done()
-		}(ax, artifactDefinition)
-	}
-	wg.Wait()
 }
