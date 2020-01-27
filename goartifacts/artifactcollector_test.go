@@ -58,6 +58,9 @@ func (r *TestCollector) Resolve(s string) ([]string, error) {
 		return []string{"xxx", "yyy"}, nil
 	case "faz":
 		return []string{"%foo%"}, nil
+	case "environ_systemdrive":
+		return []string{"C:"}, nil
+
 	}
 	return nil, errors.New("could not resolve")
 }

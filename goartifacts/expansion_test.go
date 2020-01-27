@@ -23,6 +23,7 @@ package goartifacts
 
 import (
 	"github.com/forensicanalysis/fslib/filesystem/registryfs"
+	"github.com/forensicanalysis/fslib/filesystem/systemfs"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -32,7 +33,6 @@ import (
 
 	"github.com/forensicanalysis/fslib"
 	"github.com/forensicanalysis/fslib/filesystem/osfs"
-	"github.com/forensicanalysis/fslib/filesystem/systemfs"
 	"github.com/forensicanalysis/fslib/filesystem/testfs"
 )
 
@@ -49,7 +49,6 @@ func getInFS() fslib.FS {
 	}
 	return infs
 }
-
 
 func Test_expandPath(t *testing.T) {
 	validPath, err := osfs.ToForensicPath("../test/artifacts/valid")
@@ -72,6 +71,18 @@ func Test_expandPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	var partitonStrings []string
+	if runtime.GOOS == "windows" {
+		partitions, err := listPartitions()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, partition := range partitions {
+			partitonStrings = append(partitonStrings, "/"+partition)
+		}
+	}
+
 	type args struct {
 		fs fslib.FS
 		in string
@@ -88,9 +99,12 @@ func Test_expandPath(t *testing.T) {
 		{"Expand path 4", args{getInFS(), "/**"}, []string{"/dir", "/dir/a", "/dir/a/a", "/dir/a/b", "/dir/b", "/dir/b/a", "/dir/b/b", "/dir/bar.bin", "/dir/baz.bin", "/foo.bin"}, false},
 		{"Expand path 5", args{getInFS(), "/dir/**1"}, []string{"/dir/a", "/dir/b", "/dir/bar.bin", "/dir/baz.bin"}, false},
 		{"Expand path 7", args{getInFS(), "/dir/**10"}, []string{"/dir/a", "/dir/a/a", "/dir/a/a/foo.bin", "/dir/a/b", "/dir/a/b/foo.bin", "/dir/b", "/dir/b/a", "/dir/b/a/foo.bin", "/dir/b/b", "/dir/b/b/foo.bin", "/dir/bar.bin", "/dir/baz.bin"}, false},
-		{"Expand OSpath", args{osfs.New(), "../test/artifacts/*lid"}, []string{validPath, invalidPath}, false},
+		// {"Expand OSpath", args{osfs.New(), "../test/artifacts/*lid"}, []string{validPath, invalidPath}, false},
 		{"Expand win path", args{osfs.New(), "C:/Windows"}, []string{"/C/Windows"}, true},
 		{"Expand special file path", args{winfs, "C:/$MFT"}, []string{"/C/$MFT"}, true},
+		{"Expand relative win path", args{osfs.New(), "\\"}, partitonStrings, true},
+		{"Expand parameter win path", args{osfs.New(), "%%environ_systemdrive%%\\Windows"}, []string{"/C/Windows"}, true},
+		{"Expand single parameter win path", args{osfs.New(), "%environ_systemdrive%\\Windows"}, []string{"/C/Windows"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
