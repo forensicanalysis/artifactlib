@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Siemens AG
+// Copyright (c) 2020 Siemens AG
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -19,35 +19,48 @@
 //
 // Author(s): Jonas Plum
 
-// +build !windows
-
 package goartifacts
 
 import (
-	"reflect"
-	"testing"
+	"errors"
+	"github.com/forensicanalysis/fslib"
 )
 
-func Test_expandKey(t *testing.T) {
-	type args struct {
-		s string
+type TestCollector struct {
+	fs        fslib.FS
+	Collected map[string][]Source
+}
+
+func (r *TestCollector) Collect(name string, source Source) {
+	source = ExpandSource(source, r)
+
+	if r.Collected == nil {
+		r.Collected = map[string][]Source{}
 	}
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		{"Expand Key", args{"NOKEY"}, []string{}},
+	r.Collected[name] = append(r.Collected[name], source)
+}
+
+func (r *TestCollector) FS() fslib.FS {
+	return r.fs
+}
+
+func (r *TestCollector) Registry() fslib.FS {
+	return r.fs
+}
+
+func (r *TestCollector) AddPartitions() bool {
+	return false
+}
+
+func (r *TestCollector) Resolve(s string) ([]string, error) {
+	switch s {
+	case "foo":
+		return []string{"xxx", "yyy"}, nil
+	case "faz":
+		return []string{"%foo%"}, nil
+	case "environ_systemdrive":
+		return []string{"C:"}, nil
+
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := expandKey(tt.args.s)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("expandKey() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	return nil, errors.New("could not resolve")
 }

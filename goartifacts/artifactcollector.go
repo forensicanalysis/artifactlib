@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Siemens AG
+// Copyright (c) 2020 Siemens AG
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -22,23 +22,14 @@
 package goartifacts
 
 import (
-	"fmt"
+	"github.com/forensicanalysis/fslib"
 )
 
-func Example() {
-	// parse artifacts
-	artifactDefinitions, flaws, err := DecodeFile("windows.yaml")
-	if err != nil {
-		panic(err)
-	}
+type ArtifactCollector interface {
+	Resolve(parameter string) ([]string, error)
+	Collect(name string, source Source)
 
-	// print all problems found
-	for _, flaw := range flaws {
-		fmt.Printf("Problem in %s %s: %s\n", flaw.File, flaw.ArtifactDefinition, flaw.Message)
-	}
-
-	// print all artifact definitions found
-	for _, artifactDefinition := range artifactDefinitions {
-		fmt.Printf("Decoded artifact definition %s\n", artifactDefinition.Name)
-	}
+	FS() fslib.FS
+	Registry() fslib.FS
+	AddPartitions() bool
 }

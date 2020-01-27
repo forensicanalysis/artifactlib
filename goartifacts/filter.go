@@ -22,11 +22,11 @@
 package goartifacts
 
 import (
-	"log"
 	"runtime"
+	"strings"
 )
 
-func filterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
+func FilterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	var selected []ArtifactDefinition
 	for _, artifactDefinition := range artifactDefinitions {
 		if isOSArtifactDefinition(runtime.GOOS, artifactDefinition.SupportedOs) {
@@ -43,41 +43,35 @@ func filterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	return selected
 }
 
-func searchArtifacts(names []string, artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
+func FilterName(names []string, artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	artifactDefinitionMap := map[string]ArtifactDefinition{}
 	for _, artifactDefinition := range artifactDefinitions {
 		artifactDefinitionMap[artifactDefinition.Name] = artifactDefinition
 	}
 	var artifactList []ArtifactDefinition
-	for _, artifact := range getArtifacts(names, artifactDefinitionMap) {
+	for _, artifact := range expandArtifactGroup(names, artifactDefinitionMap) {
 		artifactList = append(artifactList, artifact)
 	}
 	return  artifactList
 }
 
-func getArtifacts(names []string, artifactDefinitions map[string]ArtifactDefinition) map[string]ArtifactDefinition {
-	selected := map[string]ArtifactDefinition{}
-	for _, name := range names {
-		artifact, ok := artifactDefinitions[name]
-		if !ok {
-			log.Printf("Artifact Definition %s not found", name)
-			continue
-		}
-
-		onlyGroup := true
-		for _, source := range artifact.Sources {
-			if source.Type == "ARTIFACT_GROUP" {
-				for subName, subArtifact := range getArtifacts(source.Attributes.Names, artifactDefinitions){
-					selected[subName] = subArtifact
-				}
-			} else {
-				onlyGroup = false
-			}
-		}
-		if !onlyGroup {
-			selected[artifact.Name] = artifact
+func isOSArtifactDefinition(os string, supportedOs []string) bool {
+	if len(supportedOs) == 0 {
+		return true
+	}
+	for _, supportedos := range supportedOs {
+		if strings.EqualFold(supportedos, os) {
+			return true
 		}
 	}
+	return false
+}
 
-	return selected
+func getSupportedOS(definition ArtifactDefinition, source Source) []string {
+	if len(source.SupportedOs) > 0 {
+		return source.SupportedOs
+	} else if len(definition.SupportedOs) > 0 {
+		return definition.SupportedOs
+	}
+	return listOSS()
 }

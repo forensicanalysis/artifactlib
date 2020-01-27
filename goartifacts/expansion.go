@@ -22,44 +22,17 @@
 package goartifacts
 
 import (
+	"errors"
 	"fmt"
 	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
-	"github.com/forensicanalysis/fslib/filesystem/registryfs"
 	"github.com/forensicanalysis/fslib/forensicfs/glob"
 	"log"
 	"regexp"
 	"runtime"
 	"strings"
-	"sync"
 )
 
-// Expand performs parameter expansion and globbing on a list of artifact definitions.
-func Expand(infs fslib.FS, artifactDefinitions []ArtifactDefinition, addPartitions bool) ([]ArtifactDefinition, error) {
-	for ax, artifactDefinition := range artifactDefinitions {
-		for sx, source := range artifactDefinition.Sources {
-			artifactDefinitions[ax].Sources[sx] = expandSource(source, infs, addPartitions)
-		}
-	}
-	return artifactDefinitions, nil
-}
-
-// ExpandChannel performs parameter expansion and globbing on a list of artifact definitions.
-func ExpandChannel(sourceChannel chan<- NamedSource, infs fslib.FS, artifactDefinitions []ArtifactDefinition, addPartitions bool) {
-	var wg sync.WaitGroup
-	for ax, artifactDefinition := range artifactDefinitions {
-		wg.Add(1)
-		go func(ax int, artifactDefinition ArtifactDefinition) {
-			for _, source := range artifactDefinition.Sources {
-				sourceChannel <- NamedSource{expandSource(source, infs, addPartitions), artifactDefinition.Name}
-			}
-			wg.Done()
-		}(ax, artifactDefinition)
-	}
-	wg.Wait()
-}
-
-func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
+func ExpandSource(source Source, collector ArtifactCollector) Source {
 	replacer := strings.NewReplacer("\\", "/", "/", "\\")
 	switch source.Type {
 	case "FILE", "DIRECTORY", "PATH":
@@ -69,7 +42,7 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 			if source.Attributes.Separator == "\\" {
 				path = strings.ReplaceAll(path, "\\", "/")
 			}
-			paths, err := expandPath(infs, path, addPartitions)
+			paths, err := expandPath(collector.FS(), path, collector.AddPartitions(), collector)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -82,7 +55,7 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 		var expandKeys []string
 		for _, key := range source.Attributes.Keys {
 			key = "/" + replacer.Replace(key)
-			keys, err := expandKey(key)
+			keys, err := expandKey(key, collector)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -95,7 +68,7 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 		var expandKeyValuePairs []KeyValuePair
 		for _, keyValuePair := range source.Attributes.KeyValuePairs {
 			key := "/" + replacer.Replace(keyValuePair.Key)
-			keys, err := expandKey(key)
+			keys, err := expandKey(key, collector)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -109,46 +82,104 @@ func expandSource(source Source, infs fslib.FS, addPartitions bool) Source {
 	return source
 }
 
-func expandPath(fs fslib.FS, syspath string, addPartitions bool) ([]string, error) {
+func expandArtifactGroup(names []string, artifactDefinitions map[string]ArtifactDefinition) map[string]ArtifactDefinition {
+	selected := map[string]ArtifactDefinition{}
+	for _, name := range names {
+		artifact, ok := artifactDefinitions[name]
+		if !ok {
+			log.Printf("Artifact Definition %s not found", name)
+			continue
+		}
+
+		onlyGroup := true
+		for _, source := range artifact.Sources {
+			if source.Type == "ARTIFACT_GROUP" {
+				for subName, subArtifact := range expandArtifactGroup(source.Attributes.Names, artifactDefinitions) {
+					selected[subName] = subArtifact
+				}
+			} else {
+				onlyGroup = false
+			}
+		}
+		if !onlyGroup {
+			selected[artifact.Name] = artifact
+		}
+	}
+
+	return selected
+}
+
+func isLetter(c byte) bool {
+	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
+}
+
+func toForensicPath(name string, addPartitions bool) ([]string, error) {
+	if runtime.GOOS != "windows" && name[0] != '/' {
+		return nil, errors.New("path needs to be absolute")
+	}
+
+	if runtime.GOOS == "windows" {
+		name = strings.ReplaceAll(name, `\`, "/")
+		switch {
+		case len(name) == 0:
+			return []string{"/"}, nil
+		case len(name) == 1:
+			if name[0] == '/' {
+				if addPartitions {
+					partitions, err := listPartitions()
+					if err != nil {
+						return nil, err
+					}
+					var names []string
+					for _, partition := range partitions {
+						names = append(names, fmt.Sprintf("/%s", partition))
+					}
+					return names, nil
+				}
+				return []string{"/"}, nil
+			} else if isLetter(name[0]) {
+				return []string{"/" + name}, nil
+			} else {
+				return nil, fmt.Errorf("invalid path: %s", name)
+			}
+		case name[1] == ':':
+			return []string{"/" + name[:1] + name[2:]}, nil
+		case name[0] == '/' && isLetter(name[1]) && (len(name) == 2 || name[2] == '/'):
+			return []string{name}, nil
+		case addPartitions:
+			partitions, err := listPartitions()
+			if err != nil {
+				return nil, err
+			}
+			var names []string
+			for _, partition := range partitions {
+				names = append(names, fmt.Sprintf("/%s%s", partition, name))
+			}
+			return names, nil
+		default:
+			return []string{name}, nil
+		}
+	}
+	return []string{name}, nil
+}
+
+func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector ArtifactCollector) ([]string, error) {
 	// expand vars
-	variablePaths := expandVar(syspath)
+	variablePaths, err := recursiveResolve(syspath, collector)
+	if err != nil {
+		return nil, err
+	}
 	if len(variablePaths) == 0 {
 		return nil, nil
 	}
 
-	var forensicPaths []string
-	for _, variablePath := range variablePaths {
-		if addPartitions {
-			var err error
-			forensicPath, err := osfs.ToForensicPath(variablePath)
-			if err != nil {
-				return nil, err
-			}
-			forensicPaths = append(forensicPaths, forensicPath)
-		} else {
-			forensicPaths = append(forensicPaths, variablePath)
-		}
-	}
-
-	// Test if variable path starts with e.g. C:/; need to be done after variable replacement
-	isAbsPath, err := regexp.MatchString(`[a-zA-Z]:/`, variablePaths[0])
-	if err != nil {
-		return nil, err
-	}
-
 	var partitionPaths []string
-	if runtime.GOOS == "windows" && addPartitions && !isAbsPath {
-		partitions, err := listPartitions()
+	for _, variablePath := range variablePaths {
+		forensicPaths, err := toForensicPath(variablePath, addPartitions)
 		if err != nil {
 			return nil, err
 		}
-		for _, forensicPath := range forensicPaths {
-			for _, partition := range partitions {
-				partitionPaths = append(partitionPaths, fmt.Sprintf("/%s/%s", partition, forensicPath[3:]))
-			}
-		}
-	} else {
-		partitionPaths = forensicPaths
+		partitionPaths = append(partitionPaths, forensicPaths...)
 	}
 
 	// unglob paths
@@ -167,9 +198,44 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool) ([]string, erro
 	return unglobedPaths, nil
 }
 
-func expandKey(path string) ([]string, error) {
+func expandKey(path string, collector ArtifactCollector) ([]string, error) {
 	if runtime.GOOS == "windows" {
-		return expandPath(registryfs.New(), path, false)
+		return expandPath(collector.Registry(), path, false, collector)
 	}
 	return []string{}, nil
+}
+
+func recursiveResolve(s string, collector ArtifactCollector) ([]string, error) {
+	var re = regexp.MustCompile(`%?%(.*?)%?%`)
+	matches := re.FindAllStringSubmatch(s, -1)
+
+	if len(matches) > 0 {
+		var replacedParameters []string
+		for _, match := range matches {
+			resolves, err := collector.Resolve(match[1])
+			if err != nil {
+				return nil, err
+			}
+
+			replacedParameters = append(replacedParameters, replaces(re, s, resolves)...)
+		}
+		var results []string
+		for _, result := range replacedParameters {
+			childResults, err := recursiveResolve(result, collector)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, childResults...)
+		}
+		return results, nil
+	} else {
+		return []string{s}, nil
+	}
+}
+
+func replaces(regex *regexp.Regexp, s string, news []string) (ss []string) {
+	for _, newString := range news {
+		ss = append(ss, regex.ReplaceAllString(s, newString))
+	}
+	return
 }

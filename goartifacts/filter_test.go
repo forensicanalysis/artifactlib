@@ -36,14 +36,38 @@ func Test_filterOS(t *testing.T) {
 		args args
 		want []ArtifactDefinition
 	}{
-		{"filterOS true", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{runtime.GOOS}}}}, []ArtifactDefinition{{Name: "Test", Sources: nil, SupportedOs: []string{runtime.GOOS}}}},
-		{"filterOS sources", args{[]ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}, {SupportedOs: []string{"xxx"}}}}}}, []ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}}}}},
-		{"filterOS false", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{"xxx"}}}}, nil},
+		{"FilterOS true", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{runtime.GOOS}}}}, []ArtifactDefinition{{Name: "Test", Sources: nil, SupportedOs: []string{runtime.GOOS}}}},
+		{"FilterOS sources", args{[]ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}, {SupportedOs: []string{"xxx"}}}}}}, []ArtifactDefinition{{Name: "Test", Sources: []Source{{SupportedOs: []string{runtime.GOOS}}}}}},
+		{"FilterOS false", args{[]ArtifactDefinition{{Name: "Test", SupportedOs: []string{"xxx"}}}}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := filterOS(tt.args.artifactDefinitions); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("filterOS() = %#v, want %#v", got, tt.want)
+			if got := FilterOS(tt.args.artifactDefinitions); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FilterOS() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_isOSArtifactDefinition(t *testing.T) {
+	type args struct {
+		os          string
+		supportedOs []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"Test Windows", args{"Windows", []string{"Windows"}}, true},
+		{"Test Windows", args{"Windows", []string{"Linux", "Darwin"}}, false},
+		{"Test Linux", args{"Linux", []string{"Linux"}}, true},
+		{"Test Darwin", args{"Darwin", []string{"Darwin"}}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isOSArtifactDefinition(tt.args.os, tt.args.supportedOs); got != tt.want {
+				t.Errorf("isOSArtifactDefinition() = %v, want %v", got, tt.want)
 			}
 		})
 	}

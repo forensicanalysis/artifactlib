@@ -23,12 +23,10 @@ package artifactlib_test
 
 import (
 	"fmt"
-
 	"github.com/forensicanalysis/artifactlib/goartifacts"
-	"github.com/forensicanalysis/fslib/filesystem/testfs"
 )
 
-func ExampleProcessArtifacts() {
+/* func ExampleProcessArtifacts() {
 	// This parses the arifact files, filters for the current OS, expands variables
 	// and globing parameters
 
@@ -36,16 +34,18 @@ func ExampleProcessArtifacts() {
 	fs := &testfs.FS{}
 	fs.CreateFile("foo.txt", nil)
 
+	collector := collection.NewCollector()
+
 	// []string{"Test1"}: Artifacts to filter for, artifacts groups are expanded
 	// fs: File system used for expansion
 	// false: Flag if multiple partitions are tried on windows
 	// []string{"test/artifacts/collect_1.yaml"}: Files with artifact defintions
-	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, false, []string{"test/artifacts/collect_1.yaml"})
+	artifacts, _ := goartifacts.ProcessFiles([]string{"Test1"}, fs, false, []string{"test/artifacts/collect_1.yaml"}, collector)
 
 	// print resolved paths of the parsed artifact definition
 	fmt.Println(artifacts[0].Sources[0].Attributes.Paths)
 	// Output: [/foo.txt]
-}
+} */
 
 func ExampleValidate() {
 	// Validate an artifact definition files

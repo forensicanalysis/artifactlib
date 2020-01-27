@@ -23,12 +23,6 @@
 // artifact definition files.
 package goartifacts
 
-import (
-	"io"
-
-	"gopkg.in/yaml.v2"
-)
-
 // A KeyValuePair represents Windows Registry key path and value name that can
 // potentially be collected.
 type KeyValuePair struct {
@@ -94,39 +88,52 @@ type ArtifactDefinition struct {
 	Urls        []string `yaml:"urls,omitempty"`
 }
 
-// A Decoder reads and decodes YAML values from an input stream.
-type Decoder struct {
-	yamldecoder *yaml.Decoder
+// SourceType is an enumeration of artifact definition source types
+var SourceType = struct {
+	ArtifactGroup string
+	Command       string
+	Directory     string
+	File          string
+	Path          string
+	RegistryKey   string
+	RegistryValue string
+	Wmi           string
+}{
+	ArtifactGroup: "ARTIFACT_GROUP",
+	Command:       "COMMAND",
+	Directory:     "DIRECTORY",
+	File:          "FILE",
+	Path:          "PATH",
+	RegistryKey:   "REGISTRY_KEY",
+	RegistryValue: "REGISTRY_VALUE",
+	Wmi:           "WMI",
 }
 
-// NewDecoder returns a new decoder that reads from r.
-//
-// The decoder introduces its own buffering and may read
-// data from r beyond the YAML values requested.
-func NewDecoder(r io.Reader) *Decoder {
-	d := yaml.NewDecoder(r)
-	d.SetStrict(true)
-	return &Decoder{yamldecoder: d}
-}
-
-// Decode reads the next YAML-encoded value from its input and stores it in the
-// value pointed to by v.
-// See the documentation for Unmarshal for details about the conversion of YAML
-// into a Go value.
-func (dec *Decoder) Decode() ([]ArtifactDefinition, error) {
-	var artifactDefinitions []ArtifactDefinition
-	artifactDefinition := ArtifactDefinition{}
-	for {
-		// load every document
-		err := dec.yamldecoder.Decode(&artifactDefinition)
-		if err != nil {
-			if err == io.EOF {
-				return artifactDefinitions, nil
-			}
-			return artifactDefinitions, err
-		}
-
-		// gather artifact
-		artifactDefinitions = append(artifactDefinitions, artifactDefinition)
+// listTypes returns a list of all artifact definition source types
+func listTypes() []string {
+	return []string{
+		SourceType.ArtifactGroup,
+		SourceType.Command,
+		SourceType.Directory,
+		SourceType.File,
+		SourceType.Path,
+		SourceType.RegistryKey,
+		SourceType.RegistryValue,
+		SourceType.Wmi,
 	}
+}
+
+// supportedOS is an enumeration of all supported OSs
+var supportedOS = struct {
+	Darwin  string
+	Linux   string
+	Windows string
+}{
+	Darwin:  "Darwin",
+	Linux:   "Linux",
+	Windows: "Windows",
+}
+
+func listOSS() []string {
+	return []string{supportedOS.Darwin, supportedOS.Linux, supportedOS.Windows}
 }
