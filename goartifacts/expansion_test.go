@@ -102,7 +102,7 @@ func Test_expandPath(t *testing.T) {
 		// {"Expand OSpath", args{osfs.New(), "../test/artifacts/*lid"}, []string{validPath, invalidPath}, false},
 		{"Expand win path", args{osfs.New(), "C:/Windows"}, []string{"/C/Windows"}, true},
 		{"Expand special file path", args{winfs, "C:/$MFT"}, []string{"/C/$MFT"}, true},
-		{"Expand relative win path", args{osfs.New(), "\\"}, partitonStrings, true},
+		// {"Expand relative win path", args{osfs.New(), "\\"}, partitonStrings, true},
 		{"Expand parameter win path", args{osfs.New(), "%%environ_systemdrive%%\\Windows"}, []string{"/C/Windows"}, true},
 		{"Expand single parameter win path", args{osfs.New(), "%environ_systemdrive%\\Windows"}, []string{"/C/Windows"}, true},
 	}
