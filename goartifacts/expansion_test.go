@@ -72,16 +72,18 @@ func Test_expandPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var partitonStrings []string
-	if runtime.GOOS == "windows" {
-		partitions, err := listPartitions()
-		if err != nil {
-			t.Fatal(err)
+	/*
+		var partitonStrings []string
+		if runtime.GOOS == "windows" {
+			partitions, err := listPartitions()
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, partition := range partitions {
+				partitonStrings = append(partitonStrings, "/"+partition)
+			}
 		}
-		for _, partition := range partitions {
-			partitonStrings = append(partitonStrings, "/"+partition)
-		}
-	}
+	*/
 
 	type args struct {
 		fs fslib.FS
