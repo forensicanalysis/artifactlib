@@ -8,8 +8,6 @@
 </p>
 
 {{.Doc}}
-
-
 ## Python library
 
 ### Installation
@@ -23,7 +21,7 @@ pip install pyartifacts
 ### Usage
 
 ```python
-import forensicstore
+from pyartifacts.registry import Registry
 
 if __name__ == '__main__':
     registry = Registry()
@@ -31,7 +29,7 @@ if __name__ == '__main__':
     print(registry)
 ```
 
-The full documentation can be found in [the documentation](TODO).
+The full documentation can be found in [the documentation](https://forensicanalysis.github.io/artifactlib/pyartifacts/docs/html).
 
 ## Go package
 
@@ -51,8 +49,6 @@ go get -u {{.ModulePath}}
 {{ $value }}
 ```
 {{end}}{{end}}
-
-The full documentation can be found on [pkg.go.dev](https://pkg.go.dev/{{.ModulePath}}).
 
 ## Contact
 

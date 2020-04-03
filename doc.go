@@ -24,6 +24,7 @@
 //
 // Artifact definition files
 //
+// The artifact definition format is described in detail in the Style Guide (https://github.com/forensicanalysis/artifactlib/blob/master/docs/style_guide.md).
 // The following shows an example for an artifact definition file. It defines the
 // location of linux audit log files on a system.
 //
