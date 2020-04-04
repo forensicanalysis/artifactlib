@@ -23,6 +23,7 @@ package goartifacts
 
 import (
 	"errors"
+
 	"github.com/forensicanalysis/fslib"
 )
 

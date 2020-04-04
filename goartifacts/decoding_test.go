@@ -24,14 +24,15 @@ package goartifacts
 import (
 	"bytes"
 	"errors"
-	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
 	"io"
 	"os"
 	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/forensicanalysis/fslib"
+	"github.com/forensicanalysis/fslib/filesystem/osfs"
 )
 
 func TestNewDecoder(t *testing.T) {
@@ -177,7 +178,7 @@ func TestDecodeFiles(t *testing.T) {
 	result := []ArtifactDefinition{
 		{
 			Name: "Test3Directory",
-			Doc: "Minimal dummy artifact definition for tests",
+			Doc:  "Minimal dummy artifact definition for tests",
 			Sources: []Source{{
 				Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/dev"}}, SupportedOs: []string{"Darwin", "Linux"},
 			}},

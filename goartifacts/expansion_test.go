@@ -22,8 +22,6 @@
 package goartifacts
 
 import (
-	"github.com/forensicanalysis/fslib/filesystem/registryfs"
-	"github.com/forensicanalysis/fslib/filesystem/systemfs"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -33,6 +31,8 @@ import (
 
 	"github.com/forensicanalysis/fslib"
 	"github.com/forensicanalysis/fslib/filesystem/osfs"
+	"github.com/forensicanalysis/fslib/filesystem/registryfs"
+	"github.com/forensicanalysis/fslib/filesystem/systemfs"
 	"github.com/forensicanalysis/fslib/filesystem/testfs"
 )
 

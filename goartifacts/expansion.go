@@ -24,12 +24,13 @@ package goartifacts
 import (
 	"errors"
 	"fmt"
-	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/forensicfs/glob"
 	"log"
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/forensicanalysis/fslib"
+	"github.com/forensicanalysis/fslib/forensicfs/glob"
 )
 
 func ExpandSource(source Source, collector ArtifactCollector) Source {

@@ -321,7 +321,7 @@ func Test_validator_validateParametersProvided(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(flaws) >0 {
+			if len(flaws) > 0 {
 				t.Fatal(flaws)
 			}
 
