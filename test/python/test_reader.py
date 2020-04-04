@@ -24,44 +24,45 @@ import logging
 
 import pytest
 
-from pyartifacts.registry import Registry
-from pyartifacts.variables import KnowledgeBase
+import pyartifacts
 
-TEST_ARTIFACT_LOCATION = os.path.join(os.path.dirname(__file__), 'artifacts', "test.yaml")
+TEST_ARTIFACT_LOCATION = os.path.join(os.path.dirname(__file__), '..', 'artifacts', "test.yaml")
 ARTIFACT_LOCATION = os.environ.get('ARTIFACT_PATH', TEST_ARTIFACT_LOCATION)
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'DEBUG'))
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def registry():
-    registry = Registry()
+    registry = pyartifacts.Registry()
     registry.read_file(ARTIFACT_LOCATION)
     return registry
 
 
-def test_artifact_read(registry):
-    assert len(registry.artifacts) == 7
-    assert 'EmptyArtifact' not in registry.artifacts
+class TestPyArtifacts:
+
+    def test_artifact_read(self, registry):
+        assert len(registry.artifacts) == 7
+        assert 'EmptyArtifact' not in registry.artifacts
 
 
-def test_variable_resolving(registry):
-    replies = {
-        'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\*':
-            [
-                'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\S-1337',
-                'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\X-1111',
-                'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\FOO-S-BAR',
-                'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\X-1111',
-            ]
-    }
+    def test_variable_resolving(self, registry):
+        replies = {
+            'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\*':
+                [
+                    'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\S-1337',
+                    'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\X-1111',
+                    'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\FOO-S-BAR',
+                    'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\X-1111',
+                ]
+        }
 
-    def callback(source):
-        if source.type == 'REGISTRY_KEY':
-            return replies[source.keys[0]]
-        else:
-            assert False
+        def callback(source):
+            if source.type == 'REGISTRY_KEY':
+                return replies[source.keys[0]]
+            else:
+                assert False
 
-    kb: KnowledgeBase = registry.get_knowledge_base()
-    resolved = kb.get_value('users.sid', callback)
-    assert resolved == {'S-1337', 'X-1111', 'FOO-S-BAR'}
+        kb: pyartifacts.KnowledgeBase = registry.get_knowledge_base()
+        resolved = kb.get_value('users.sid', callback)
+        assert resolved == {'S-1337', 'X-1111', 'FOO-S-BAR'}

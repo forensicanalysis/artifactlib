@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Siemens AG
+# Copyright (c) 2020 Siemens AG
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -17,19 +17,4 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-# Author(s): Demian Kellermann
-
-from setuptools import setup
-
-setup(
-    name='pyartifacts',
-    version='0.12.3',
-    url='https://github.com/forensicanalysis/artifactlib',
-    author='Demian Kellermann',
-    author_email='demian.kellermann@siemens.com',
-    description='Lightweight ForensicArtifacts library',
-    packages=['pyartifacts'],
-    include_package_data=True,
-    install_requires=['jsonschema', 'pyyaml', 'networkx'],
-    zip_safe=False,
-)
+# Author(s): Jonas Plum

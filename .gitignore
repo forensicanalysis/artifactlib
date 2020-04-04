@@ -114,3 +114,4 @@ dmypy.json
 .idea
 
 public
+.DS_Store
