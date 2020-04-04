@@ -23,6 +23,7 @@ package artifactlib_test
 
 import (
 	"fmt"
+
 	"github.com/forensicanalysis/artifactlib/goartifacts"
 )
 

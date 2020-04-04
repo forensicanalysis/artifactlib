@@ -52,7 +52,7 @@ func FilterName(names []string, artifactDefinitions []ArtifactDefinition) []Arti
 	for _, artifact := range expandArtifactGroup(names, artifactDefinitionMap) {
 		artifactList = append(artifactList, artifact)
 	}
-	return  artifactList
+	return artifactList
 }
 
 func isOSArtifactDefinition(os string, supportedOs []string) bool {
