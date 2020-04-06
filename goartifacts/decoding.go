@@ -34,7 +34,7 @@ func DecodeFile(filename string) ([]ArtifactDefinition, []Flaw, error) {
 	var flaws []Flaw
 
 	// open file
-	f, err := os.Open(filename)
+	f, err := os.Open(filename) // #nosec
 	if err != nil {
 		return artifactDefinitions, flaws, err
 	}

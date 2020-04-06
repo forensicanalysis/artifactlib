@@ -33,10 +33,14 @@ import (
 	"github.com/forensicanalysis/fslib/forensicfs/glob"
 )
 
+const windows = "windows"
+
+// ExpandSource expands a single artifact definition source by expanding its
+// paths or keys.
 func ExpandSource(source Source, collector ArtifactCollector) Source {
 	replacer := strings.NewReplacer("\\", "/", "/", "\\")
 	switch source.Type {
-	case "FILE", "DIRECTORY", "PATH":
+	case SourceType.File, SourceType.Directory, SourceType.Path:
 		// expand paths
 		var expandedPaths []string
 		for _, path := range source.Attributes.Paths {
@@ -51,7 +55,7 @@ func ExpandSource(source Source, collector ArtifactCollector) Source {
 			expandedPaths = append(expandedPaths, paths...)
 		}
 		source.Attributes.Paths = expandedPaths
-	case "REGISTRY_KEY":
+	case SourceType.RegistryKey:
 		// expand keys
 		var expandKeys []string
 		for _, key := range source.Attributes.Keys {
@@ -64,7 +68,7 @@ func ExpandSource(source Source, collector ArtifactCollector) Source {
 			expandKeys = append(expandKeys, keys...)
 		}
 		source.Attributes.Keys = expandKeys
-	case "REGISTRY_VALUE":
+	case SourceType.RegistryValue:
 		// expand key value pairs
 		var expandKeyValuePairs []KeyValuePair
 		for _, keyValuePair := range source.Attributes.KeyValuePairs {
@@ -94,7 +98,7 @@ func expandArtifactGroup(names []string, artifactDefinitions map[string]Artifact
 
 		onlyGroup := true
 		for _, source := range artifact.Sources {
-			if source.Type == "ARTIFACT_GROUP" {
+			if source.Type == SourceType.ArtifactGroup {
 				for subName, subArtifact := range expandArtifactGroup(source.Attributes.Names, artifactDefinitions) {
 					selected[subName] = subArtifact
 				}
@@ -115,11 +119,11 @@ func isLetter(c byte) bool {
 }
 
 func toForensicPath(name string, addPartitions bool) ([]string, error) {
-	if runtime.GOOS != "windows" && name[0] != '/' {
+	if runtime.GOOS != windows && name[0] != '/' {
 		return nil, errors.New("path needs to be absolute")
 	}
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		name = strings.ReplaceAll(name, `\`, "/")
 		switch {
 		case len(name) == 0:
@@ -200,7 +204,7 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector Artif
 }
 
 func expandKey(path string, collector ArtifactCollector) ([]string, error) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		return expandPath(collector.Registry(), path, false, collector)
 	}
 	return []string{}, nil
@@ -229,9 +233,8 @@ func recursiveResolve(s string, collector ArtifactCollector) ([]string, error) {
 			results = append(results, childResults...)
 		}
 		return results, nil
-	} else {
-		return []string{s}, nil
 	}
+	return []string{s}, nil
 }
 
 func replaces(regex *regexp.Regexp, s string, news []string) (ss []string) {

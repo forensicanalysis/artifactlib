@@ -25,6 +25,8 @@ import (
 	"github.com/forensicanalysis/fslib"
 )
 
+// ArtifactCollector is an interface that can resolve parameters in artifact
+// defintions and collect artifacts.
 type ArtifactCollector interface {
 	Resolve(parameter string) ([]string, error)
 	Collect(name string, source Source)
