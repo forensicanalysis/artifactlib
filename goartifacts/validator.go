@@ -282,7 +282,7 @@ func (r *validator) validateGroupMemberExist(artifactDefinitions []ArtifactDefin
 	}
 }
 
-func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDefinition) {
+func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDefinition) { // nolint:gocyclo
 	parametersRequired := map[string]map[string]string{
 		"Windows": {},
 		"Darwin":  {},
@@ -484,7 +484,7 @@ func (r *validator) validateMacOSDoublePath(filename string, artifactDefinition 
 
 // source
 
-func (r *validator) validateUnnessesarryAttributes(filename, artifactDefinition string, source Source) {
+func (r *validator) validateUnnessesarryAttributes(filename, artifactDefinition string, source Source) { // nolint:gocyclo
 	hasNames := len(source.Attributes.Names) > 0
 	hasCommand := source.Attributes.Cmd != "" || len(source.Attributes.Args) > 0
 	hasPaths := len(source.Attributes.Paths) > 0 || source.Attributes.Separator != ""

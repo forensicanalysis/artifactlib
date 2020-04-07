@@ -24,6 +24,7 @@ package goartifacts
 import (
 	"errors"
 	"fmt"
+	"github.com/forensicanalysis/fslib/filesystem/osfs"
 	"log"
 	"regexp"
 	"runtime"
@@ -118,7 +119,7 @@ func isLetter(c byte) bool {
 	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
 }
 
-func toForensicPath(name string, addPartitions bool) ([]string, error) {
+func toForensicPath(name string, addPartitions bool) ([]string, error) { // nolint:gocyclo
 	if runtime.GOOS != windows && name[0] != '/' {
 		return nil, errors.New("path needs to be absolute")
 	}
@@ -131,7 +132,8 @@ func toForensicPath(name string, addPartitions bool) ([]string, error) {
 		case len(name) == 1:
 			if name[0] == '/' {
 				if addPartitions {
-					partitions, err := listPartitions()
+					root := &osfs.Root{}
+					partitions, err := root.Readdirnames(0)
 					if err != nil {
 						return nil, err
 					}
@@ -152,7 +154,8 @@ func toForensicPath(name string, addPartitions bool) ([]string, error) {
 		case name[0] == '/' && isLetter(name[1]) && (len(name) == 2 || name[2] == '/'):
 			return []string{name}, nil
 		case addPartitions:
-			partitions, err := listPartitions()
+			root := &osfs.Root{}
+			partitions, err := root.Readdirnames(0)
 			if err != nil {
 				return nil, err
 			}
