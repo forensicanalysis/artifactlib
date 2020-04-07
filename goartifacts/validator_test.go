@@ -348,7 +348,7 @@ func Test_validator_validateNoDefinitionProvides(t *testing.T) {
 		want []Flaw
 	}{
 		{"defintion provides", args{"foo.yml", ArtifactDefinition{Name: "Test", Provides: []string{"foo"}}}, []Flaw{
-			{Warning, "Definition provides are deprecated", "Test", "foo.yml"},
+			{Info, "Definition provides are deprecated", "Test", "foo.yml"},
 		}},
 	}
 	for _, tt := range tests {

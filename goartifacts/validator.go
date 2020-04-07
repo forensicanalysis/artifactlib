@@ -447,7 +447,7 @@ func (r *validator) validateArtifactOS(filename string, artifactDefinition Artif
 
 func (r *validator) validateNoDefinitionProvides(filename string, artifactDefinition ArtifactDefinition) {
 	if len(artifactDefinition.Provides) > 0 {
-		r.addWarning(filename, artifactDefinition.Name, "Definition provides are deprecated")
+		r.addInfo(filename, artifactDefinition.Name, "Definition provides are deprecated")
 	}
 }
 

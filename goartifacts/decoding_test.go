@@ -107,7 +107,7 @@ func TestDecoder_Decode(t *testing.T) {
 				}},
 			},
 		}},
-		Provides:    []string{"current_control_set"},
+		//Provides:    []string{"current_control_set"},
 		SupportedOs: []string{"Windows"},
 		Urls:        []string{"https://github.com/libyal/winreg-kb/wiki/System-keys"},
 	}
