@@ -24,13 +24,13 @@ package goartifacts
 import (
 	"errors"
 	"fmt"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
 	"log"
 	"regexp"
 	"runtime"
 	"strings"
 
 	"github.com/forensicanalysis/fslib"
+	"github.com/forensicanalysis/fslib/filesystem/osfs"
 	"github.com/forensicanalysis/fslib/forensicfs/glob"
 )
 
