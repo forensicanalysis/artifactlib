@@ -46,7 +46,7 @@ import (
 
 var logger = log.New()
 
-func main() {
+func main() { // nolint:gocyclo
 	exitcode := 0
 	// parse flags
 	var verbose, summary, quite, nofail bool

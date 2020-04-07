@@ -26,6 +26,8 @@ import (
 	"strings"
 )
 
+// FilterOS returns a list of ArtifactDefinitions for the current operating
+// system.
 func FilterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	var selected []ArtifactDefinition
 	for _, artifactDefinition := range artifactDefinitions {
@@ -43,6 +45,8 @@ func FilterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	return selected
 }
 
+// FilterName return a list of ArtifactDefinitions which match the provided
+// names.
 func FilterName(names []string, artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	artifactDefinitionMap := map[string]ArtifactDefinition{}
 	for _, artifactDefinition := range artifactDefinitions {

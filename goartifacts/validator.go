@@ -125,7 +125,6 @@ func (r *validator) validateArtifactDefinitions(artifactDefinitionMap map[string
 	r.validateGroupMemberExist(globalArtifactDefinitions)
 	r.validateNoCycles(globalArtifactDefinitions)
 	r.validateParametersProvided(globalArtifactDefinitions)
-
 }
 
 // validate single artifacts
@@ -136,6 +135,7 @@ func (r *validator) validateArtifactDefinition(filename string, artifactDefiniti
 	r.validateNamePrefix(filename, artifactDefinition)
 	r.validateOSSpecific(filename, artifactDefinition)
 	r.validateArtifactOS(filename, artifactDefinition)
+	r.validateNoDefinitionProvides(filename, artifactDefinition)
 	if isOSArtifactDefinition(supportedOS.Darwin, artifactDefinition.SupportedOs) {
 		r.validateMacOSDoublePath(filename, artifactDefinition)
 	}
@@ -151,6 +151,7 @@ func (r *validator) validateArtifactDefinition(filename string, artifactDefiniti
 		r.validateSourceOS(filename, artifactDefinition.Name, source)
 		r.validateSourceType(filename, artifactDefinition.Name, source)
 		r.validateParameter(filename, artifactDefinition.Name, source)
+		r.validateSourceProvides(filename, artifactDefinition.Name, source)
 
 		if isOSArtifactDefinition(supportedOS.Windows, artifactDefinition.SupportedOs) && isOSArtifactDefinition(supportedOS.Windows, source.SupportedOs) {
 			r.validateNoWindowsHomedir(filename, artifactDefinition.Name, source)
@@ -169,7 +170,7 @@ func (r *validator) validateSyntax(filename string) {
 	}
 
 	// open file
-	f, err := os.Open(filename)
+	f, err := os.Open(filename) // #nosec
 	if err != nil {
 		r.addError(filename, "", "Error %s", err)
 		return
@@ -239,7 +240,7 @@ func (r *validator) validateNoCycles(artifactDefinitions []ArtifactDefinition) {
 	graph := make(map[interface{}][]interface{})
 	for _, artifactDefinition := range artifactDefinitions {
 		for _, source := range artifactDefinition.Sources {
-			if source.Type == "ARTIFACT_GROUP" {
+			if source.Type == SourceType.ArtifactGroup {
 				graph[artifactDefinition.Name] = []interface{}{}
 				for _, name := range source.Attributes.Names {
 					if name == artifactDefinition.Name {
@@ -281,7 +282,7 @@ func (r *validator) validateGroupMemberExist(artifactDefinitions []ArtifactDefin
 	}
 }
 
-func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDefinition) {
+func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDefinition) { // nolint:gocyclo
 	parametersRequired := map[string]map[string]string{
 		"Windows": {},
 		"Darwin":  {},
@@ -422,7 +423,6 @@ func (r *validator) validateNameTypeSuffix(filename string, artifactDefinition A
 	if !strings.HasSuffix(trimmed, endings[currentSourceType][0]) && !strings.HasSuffix(trimmed, endings[currentSourceType][1]) {
 		r.addCommon(filename, artifactDefinition.Name, "Artifact name should end in %s", strings.Join(endings[currentSourceType], " or "))
 	}
-
 }
 
 func (r *validator) validateDocLong(filename string, artifactDefinition ArtifactDefinition) {
@@ -442,6 +442,12 @@ func (r *validator) validateArtifactOS(filename string, artifactDefinition Artif
 		if !found {
 			r.addWarning(filename, artifactDefinition.Name, "OS %s is not valid", supportedos)
 		}
+	}
+}
+
+func (r *validator) validateNoDefinitionProvides(filename string, artifactDefinition ArtifactDefinition) {
+	if len(artifactDefinition.Provides) > 0 {
+		r.addInfo(filename, artifactDefinition.Name, "Definition provides are deprecated")
 	}
 }
 
@@ -478,7 +484,7 @@ func (r *validator) validateMacOSDoublePath(filename string, artifactDefinition 
 
 // source
 
-func (r *validator) validateUnnessesarryAttributes(filename, artifactDefinition string, source Source) {
+func (r *validator) validateUnnessesarryAttributes(filename, artifactDefinition string, source Source) { // nolint:gocyclo
 	hasNames := len(source.Attributes.Names) > 0
 	hasCommand := source.Attributes.Cmd != "" || len(source.Attributes.Args) > 0
 	hasPaths := len(source.Attributes.Paths) > 0 || source.Attributes.Separator != ""
@@ -578,7 +584,6 @@ func (r *validator) validateRequiredNonWindowsAttributes(filename, artifactDefin
 }
 
 func (r *validator) validateRegistryCurrentControlSet(filename, artifactDefinition string, source Source) {
-
 	err := `Registry key should not start with %%CURRENT_CONTROL_SET%%. Replace %%CURRENT_CONTROL_SET%% with HKEY_LOCAL_MACHINE\\System\\CurrentControlSet`
 
 	for _, key := range source.Attributes.Keys {
@@ -623,7 +628,6 @@ func (r *validator) validateDeprecatedVars(filename, artifactDefinition string, 
 			}
 		}
 	}
-
 }
 
 // unc (r *validator) validateDoubleStar(filename, artifactDefinition string, source Source) {
@@ -704,4 +708,10 @@ func (r *validator) validateParameter(filename, artifactDefinition string, sourc
 			r.addWarning(filename, artifactDefinition, "Parameter %s not found", match)
 		}
 	*/
+}
+
+func (r *validator) validateSourceProvides(filename, artifactDefinition string, source Source) {
+	if (source.Type == SourceType.ArtifactGroup || source.Type == SourceType.Directory) && len(source.Provides) > 0 {
+		r.addWarning(filename, artifactDefinition, "%s source should not have a provides key", source.Type)
+	}
 }

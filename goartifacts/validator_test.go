@@ -334,3 +334,60 @@ func Test_validator_validateParametersProvided(t *testing.T) {
 		})
 	}
 }
+
+func Test_validator_validateNoDefinitionProvides(t *testing.T) {
+	r := newValidator()
+
+	type args struct {
+		filename           string
+		artifactDefinition ArtifactDefinition
+	}
+	tests := []struct {
+		name string
+		args args
+		want []Flaw
+	}{
+		{"defintion provides", args{"foo.yml", ArtifactDefinition{Name: "Test", Provides: []string{"foo"}}}, []Flaw{
+			{Info, "Definition provides are deprecated", "Test", "foo.yml"},
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r.validateNoDefinitionProvides(tt.args.filename, tt.args.artifactDefinition)
+
+			if !flawsEqual(r.flaws, tt.want) {
+				t.Errorf("validateNoDefinitionProvides() = %v, want %v (%s)", r.flaws, tt.want, tt.args.filename)
+			}
+			r.flaws = []Flaw{}
+		})
+	}
+}
+
+func Test_validator_validateSourceProvides(t *testing.T) {
+	r := newValidator()
+
+	type args struct {
+		filename           string
+		artifactDefinition string
+		source             Source
+	}
+	tests := []struct {
+		name string
+		args args
+		want []Flaw
+	}{
+		{"defintion provides", args{"foo.yml", "Test", Source{Type: "ARTIFACT_GROUP", Provides: []Provide{{}}}}, []Flaw{
+			{Warning, "ARTIFACT_GROUP source should not have a provides key", "Test", "foo.yml"},
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r.validateSourceProvides(tt.args.filename, tt.args.artifactDefinition, tt.args.source)
+
+			if !flawsEqual(r.flaws, tt.want) {
+				t.Errorf("validateNoDefinitionProvides() = %v, want %v (%s)", r.flaws, tt.want, tt.args.filename)
+			}
+			r.flaws = []Flaw{}
+		})
+	}
+}
