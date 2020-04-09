@@ -190,20 +190,29 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector Artif
 		partitionPaths = append(partitionPaths, forensicPaths...)
 	}
 
-	// unglob paths
-	var unglobedPaths []string
+	addedPaths := make(map[string]bool)
+
+	// unglob and unique paths
+	var uniquePaths []string
 	for _, expandedPath := range partitionPaths {
 		expandedPath = strings.ReplaceAll(expandedPath, "{", `\{`)
 		expandedPath = strings.ReplaceAll(expandedPath, "}", `\}`)
-		unglobedPath, err := glob.Glob(fs, expandedPath)
+		unglobedPaths, err := glob.Glob(fs, expandedPath)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		unglobedPaths = append(unglobedPaths, unglobedPath...)
+
+		for _, unglobedPath := range unglobedPaths {
+			// TODO: this also removes files with the same name in different cases in case sensitive filesystems
+			if _, ok := addedPaths[strings.ToLower(unglobedPath)]; !ok {
+				addedPaths[strings.ToLower(unglobedPath)] = true
+				uniquePaths = append(uniquePaths, unglobedPath)
+			}
+		}
 	}
 
-	return unglobedPaths, nil
+	return uniquePaths, nil
 }
 
 func expandKey(path string, collector ArtifactCollector) ([]string, error) {
