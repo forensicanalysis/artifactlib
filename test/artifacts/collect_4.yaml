@@ -1,7 +1,0 @@
-# Artifact definitions for testing
-
-name: Test4
-doc: Minimal dummy artifact definition for tests
-sources:
-- type: DIRECTORY
-  attributes: {paths: ['/dir']}

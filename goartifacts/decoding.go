@@ -91,12 +91,10 @@ func NewDecoder(r io.Reader) *Decoder {
 
 // Decode reads the next YAML-encoded value from its input and stores it in the
 // value pointed to by v.
-// See the documentation for Unmarshal for details about the conversion of YAML
-// into a Go value.
 func (dec *Decoder) Decode() ([]ArtifactDefinition, error) {
 	var artifactDefinitions []ArtifactDefinition
-	artifactDefinition := ArtifactDefinition{}
 	for {
+		artifactDefinition := ArtifactDefinition{}
 		// load every document
 		err := dec.yamldecoder.Decode(&artifactDefinition)
 		if err != nil {
