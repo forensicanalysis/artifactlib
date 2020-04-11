@@ -76,40 +76,49 @@ func TestDecoder_Decode(t *testing.T) {
 		SupportedOs: []string{"Unknown"},
 	}
 
-	windowsSystemEventLogEvtxYaml, _ := os.Open("../test/artifacts/valid/WindowsSystemEventLogEvtx.yaml")
-	windowsRegistryCurrentControlSetYaml, _ := os.Open("../test/artifacts/valid/WindowsRegistryCurrentControlSet.yaml")
+	validYaml, _ := os.Open("../test/artifacts/valid/valid.yaml")
 
-	windowsSystemEventLogEvtx := ArtifactDefinition{
-		Name: "WindowsSystemEventLogEvtxFile",
-		Doc:  "Windows System Event log for Vista or later systems.",
+	goVersionCommand := ArtifactDefinition{
+		Name: "GoVersionCommand",
+		Doc:  "Minimal dummy artifact definition for tests",
 		Sources: []Source{{
-			Type: "FILE",
+			Type: "COMMAND",
 			Attributes: Attributes{
-				Paths:     []string{`C:\Windows\System32\winevt\Logs\System.evtx`},
-				Separator: `\`,
+				Cmd:  "docker",
+				Args: []string{"version"},
 			},
 		}},
-		Conditions:  []string{"os_major_version >= 6"},
-		Labels:      []string{"Logs"},
-		SupportedOs: []string{"Windows"},
-		Urls:        []string{"http://www.forensicswiki.org/wiki/Windows_XML_Event_Log_(EVTX)"},
 	}
 
-	windowsRegistryCurrentControlSet := ArtifactDefinition{
-		Name: "WindowsRegistryCurrentControlSetRegistryValue",
-		Doc:  "The current control set of the Windows Registry.",
+	goInfoCommand := ArtifactDefinition{
+		Name: "GoInfoCommand",
+		Doc:  "Full Dummy artifact definition for tests",
 		Sources: []Source{{
-			Type: "REGISTRY_VALUE",
+			Type: "COMMAND",
 			Attributes: Attributes{
-				KeyValuePairs: []KeyValuePair{{
-					Key:   `HKEY_LOCAL_MACHINE\System\Select`,
-					Value: "Current",
-				}},
+				Cmd:  "docker",
+				Args: []string{"info"},
 			},
+			Conditions:  []string{"time_zone != Pacific/Galapagos"},
+			SupportedOs: []string{"Windows", "Linux", "Darwin"},
 		}},
 		//Provides:    []string{"current_control_set"},
-		SupportedOs: []string{"Windows"},
-		Urls:        []string{"https://github.com/libyal/winreg-kb/wiki/System-keys"},
+		Conditions:  []string{"time_zone != Pacific/Galapagos"},
+		SupportedOs: []string{"Windows", "Linux", "Darwin"},
+		Urls:        []string{"https://docs.docker.com/engine/reference/commandline/info/"},
+		Labels:      []string{"Docker"},
+	}
+
+	mysteriousCommand := ArtifactDefinition{
+		Name: "MysteriousCommand",
+		Doc:  "Mysterious command",
+		Sources: []Source{{
+			Type: "COMMAND",
+			Attributes: Attributes{
+				Cmd:  "env",
+				Args: []string{},
+			},
+		}},
 	}
 
 	type fields struct {
@@ -121,8 +130,7 @@ func TestDecoder_Decode(t *testing.T) {
 		want    []ArtifactDefinition
 		wantErr bool
 	}{
-		{"Simple Parse", fields{windowsSystemEventLogEvtxYaml}, []ArtifactDefinition{windowsSystemEventLogEvtx}, false},
-		{"Parse Provides", fields{windowsRegistryCurrentControlSetYaml}, []ArtifactDefinition{windowsRegistryCurrentControlSet}, false},
+		{"Multi Parse", fields{validYaml}, []ArtifactDefinition{goVersionCommand, goInfoCommand, mysteriousCommand}, false},
 		{"Failing Reader", fields{&failingReadSeeker{}}, []ArtifactDefinition{}, true},
 		{"Non Strict Parse Custom Fields", fields{customYaml}, []ArtifactDefinition{custom}, false},
 	}
@@ -137,7 +145,7 @@ func TestDecoder_Decode(t *testing.T) {
 				return
 			}
 			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Decoder.Decode() = %#v, want %#v", got, tt.want)
+				t.Errorf("Decoder.Decode() = %v, want %v", got, tt.want)
 			}
 			tt.fields.reader.Seek(0, io.SeekStart) // nolint
 		})
