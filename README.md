@@ -30,6 +30,7 @@ We use [https://github.com/forensicanalysis/artifacts](https://github.com/forens
 forensic artifacts definitions.
 
 
+
 ### Installation
 
 
@@ -37,7 +38,9 @@ forensic artifacts definitions.
 go get -u github.com/forensicanalysis/artifactlib
 ```
 
+
 ### Usage
+
 
 ### Validate
 ```go
