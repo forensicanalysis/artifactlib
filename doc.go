@@ -19,7 +19,7 @@
 //
 // Author(s): Jonas Plum
 
-// Package artifactlib provides a Go package and a Python library for processing
+// Package artifactlib provides a Go package for processing
 // forensic artifact definition files.
 //
 // Artifact definition files

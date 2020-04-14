@@ -9,7 +9,7 @@
 </p>
 
 
-The artifactlib project provides a Go package and a Python library for processing
+The artifactlib project provides a Go package for processing
 forensic artifact definition files.
 
 ## Artifact definition files
@@ -30,31 +30,6 @@ We use [https://github.com/forensicanalysis/artifacts](https://github.com/forens
 forensic artifacts definitions.
 
 
-## Python library
-
-### Installation
-
-Python installation can be easily done via pip:
-
-```bash
-pip install pyartifacts
-```
-
-### Usage
-
-```python
-from pyartifacts.registry import Registry
-
-if __name__ == '__main__':
-    registry = Registry()
-    registry.read_folder("test/artifacts/valid")
-    print(registry)
-```
-
-The full documentation can be found in [the documentation](https://forensicanalysis.github.io/artifactlib/pyartifacts/docs/html).
-
-## Go package
-
 ### Installation
 
 
@@ -62,9 +37,7 @@ The full documentation can be found in [the documentation](https://forensicanaly
 go get -u github.com/forensicanalysis/artifactlib
 ```
 
-
 ### Usage
-
 
 ### Validate
 ```go

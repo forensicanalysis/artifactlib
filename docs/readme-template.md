@@ -9,30 +9,6 @@
 </p>
 
 {{.Doc}}
-## Python library
-
-### Installation
-
-Python installation can be easily done via pip:
-
-```bash
-pip install pyartifacts
-```
-
-### Usage
-
-```python
-from pyartifacts.registry import Registry
-
-if __name__ == '__main__':
-    registry = Registry()
-    registry.read_folder("test/artifacts/valid")
-    print(registry)
-```
-
-The full documentation can be found in [the documentation](https://forensicanalysis.github.io/artifactlib/pyartifacts/docs/html).
-
-## Go package
 
 ### Installation
 
