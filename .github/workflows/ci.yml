@@ -90,50 +90,6 @@ jobs:
           name: artifactvalidator ${{ matrix.os }}
           path: ./cmd/artifactvalidator/bin
 
-  pyartifacts:
-    name: pyartifacts
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        python-version: [3.6, 3.7, 3.8]
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install pylint pytest pytest-cov
-
-      - run: pip install .
-
-      - run: pylint pyartifacts --rcfile test/python/.pylintrc
-      - run: pytest -v --cov-report=xml --cov=pyartifacts ../test/python
-        shell: bash
-        working-directory: pyartifacts
-
-      - name: Upload coverage
-        env:
-          CI: "true"
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        run: bash <(curl -s https://codecov.io/bash) -f pyartifacts/coverage.xml
-        if: matrix.os == 'windows-latest' && matrix.python-version == 3.8
-        shell: bash
-
-      - name: Python Documentation
-        run: |
-          pip install 'sphinx==1.8.5' sphinx_rtd_theme sphinx_markdown_builder
-          sphinx-build -M html pyartifacts/docs/src/ public/pyartifacts/docs/
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
-      - run: touch public/.nojekyll
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
-      - name: Build and Deploy
-        uses: peaceiris/actions-gh-pages@v2
-        env:
-          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-          PUBLISH_BRANCH: gh-pages
-          PUBLISH_DIR: public
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && github.ref == 'refs/heads/master'
-
   docs:
     name: Documentation
     runs-on: ubuntu-latest
