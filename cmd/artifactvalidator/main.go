@@ -44,9 +44,9 @@ import (
 	"github.com/forensicanalysis/artifactlib/goartifacts"
 )
 
-var logger = log.New()
+func main() { // nolint:gocyclo,gocognit,funlen
+	var logger = log.New()
 
-func main() { // nolint:gocyclo
 	exitcode := 0
 	// parse flags
 	var verbose, summary, quite, nofail bool
@@ -105,7 +105,7 @@ func main() { // nolint:gocyclo
 
 	if len(filteredFlaws) > 0 {
 		exitcode = 1
-		printFlaws(filteredFlaws)
+		printFlaws(logger, filteredFlaws)
 		if nofail {
 			exitcode = 0
 		}
@@ -176,7 +176,7 @@ func sortedMap(m map[string]int) ([]string, []string) {
 	return keys, values
 }
 
-func printFlaws(flaws []goartifacts.Flaw) {
+func printFlaws(logger log.Logger, flaws []goartifacts.Flaw) {
 	for _, flaw := range flaws {
 		switch flaw.Severity {
 		case goartifacts.Common:
