@@ -88,10 +88,10 @@ func ExpandSource(source Source, collector ArtifactCollector) Source {
 	return source
 }
 
-func expandArtifactGroup(names []string, artifactDefinitions map[string]ArtifactDefinition) map[string]ArtifactDefinition {
+func expandArtifactGroup(names []string, definitions map[string]ArtifactDefinition) map[string]ArtifactDefinition {
 	selected := map[string]ArtifactDefinition{}
 	for _, name := range names {
-		artifact, ok := artifactDefinitions[name]
+		artifact, ok := definitions[name]
 		if !ok {
 			log.Printf("Artifact Definition %s not found", name)
 			continue
@@ -100,7 +100,7 @@ func expandArtifactGroup(names []string, artifactDefinitions map[string]Artifact
 		onlyGroup := true
 		for _, source := range artifact.Sources {
 			if source.Type == SourceType.ArtifactGroup {
-				for subName, subArtifact := range expandArtifactGroup(source.Attributes.Names, artifactDefinitions) {
+				for subName, subArtifact := range expandArtifactGroup(source.Attributes.Names, definitions) {
 					selected[subName] = subArtifact
 				}
 			} else {
@@ -119,7 +119,7 @@ func isLetter(c byte) bool {
 	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
 }
 
-func toForensicPath(name string, addPartitions bool) ([]string, error) { // nolint:gocyclo
+func toForensicPath(name string, addPartitions bool) ([]string, error) { // nolint:gocyclo,gocognit
 	if runtime.GOOS != windows && name[0] != '/' {
 		return nil, errors.New("path needs to be absolute")
 	}
@@ -130,7 +130,8 @@ func toForensicPath(name string, addPartitions bool) ([]string, error) { // noli
 		case len(name) == 0:
 			return []string{"/"}, nil
 		case len(name) == 1:
-			if name[0] == '/' {
+			switch {
+			case name[0] == '/':
 				if addPartitions {
 					root := &osfs.Root{}
 					partitions, err := root.Readdirnames(0)
@@ -144,9 +145,9 @@ func toForensicPath(name string, addPartitions bool) ([]string, error) { // noli
 					return names, nil
 				}
 				return []string{"/"}, nil
-			} else if isLetter(name[0]) {
+			case isLetter(name[0]):
 				return []string{"/" + name}, nil
-			} else {
+			default:
 				return nil, fmt.Errorf("invalid path: %s", name)
 			}
 		case name[1] == ':':

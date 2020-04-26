@@ -88,7 +88,7 @@ type ArtifactDefinition struct {
 	Urls        []string `yaml:"urls,omitempty"`
 }
 
-// SourceType is an enumeration of artifact definition source types
+// SourceType is an enumeration of artifact definition source types.
 var SourceType = struct {
 	ArtifactGroup string
 	Command       string
@@ -109,7 +109,7 @@ var SourceType = struct {
 	Wmi:           "WMI",
 }
 
-// listTypes returns a list of all artifact definition source types
+// listTypes returns a list of all artifact definition source types.
 func listTypes() []string {
 	return []string{
 		SourceType.ArtifactGroup,
@@ -123,7 +123,7 @@ func listTypes() []string {
 	}
 }
 
-// supportedOS is an enumeration of all supported OSs
+// supportedOS is an enumeration of all supported OSs.
 var supportedOS = struct {
 	Darwin  string
 	Linux   string
