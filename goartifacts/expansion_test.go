@@ -114,7 +114,20 @@ func Test_expandPath(t *testing.T) {
 
 				resolver.fs = tt.args.fs
 
-				got, err := expandPath(tt.args.fs, tt.args.in, tt.args.fs.Name() == "OsFs" || tt.args.fs.Name() == "System FS", resolver)
+				var prefixes []string
+				if tt.args.fs.Name() == "OsFs" || tt.args.fs.Name() == "System FS" {
+					root, err := osfs.New().Open("/")
+					if err != nil {
+						t.Fatal(err)
+					}
+					names, err := root.Readdirnames(0)
+					if err != nil {
+						t.Fatal(err)
+					}
+					prefixes = names
+				}
+
+				got, err := expandPath(tt.args.fs, tt.args.in, prefixes, resolver)
 				if err != nil {
 					t.Fatal(err)
 				}
