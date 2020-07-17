@@ -33,5 +33,5 @@ type ArtifactCollector interface {
 
 	FS() fslib.FS
 	Registry() fslib.FS
-	AddPartitions() bool
+	Prefixes() []string
 }

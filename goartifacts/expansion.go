@@ -30,7 +30,6 @@ import (
 	"strings"
 
 	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
 	"github.com/forensicanalysis/fslib/forensicfs/glob"
 )
 
@@ -48,7 +47,7 @@ func ExpandSource(source Source, collector ArtifactCollector) Source {
 			if source.Attributes.Separator == "\\" {
 				path = strings.ReplaceAll(path, "\\", "/")
 			}
-			paths, err := expandPath(collector.FS(), path, collector.AddPartitions(), collector)
+			paths, err := expandPath(collector.FS(), path, collector.Prefixes(), collector)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -133,7 +132,7 @@ func isLetter(c byte) bool {
 	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
 }
 
-func toForensicPath(name string, addPartitions bool) ([]string, error) { // nolint:gocyclo,gocognit
+func toForensicPath(name string, prefixes []string) ([]string, error) { // nolint:gocyclo,gocognit
 	if runtime.GOOS != windows && name[0] != '/' {
 		return nil, errors.New("path needs to be absolute")
 	}
@@ -146,15 +145,10 @@ func toForensicPath(name string, addPartitions bool) ([]string, error) { // noli
 		case len(name) == 1:
 			switch {
 			case name[0] == '/':
-				if addPartitions {
-					root := &osfs.Root{}
-					partitions, err := root.Readdirnames(0)
-					if err != nil {
-						return nil, err
-					}
+				if len(prefixes) > 0 {
 					var names []string
-					for _, partition := range partitions {
-						names = append(names, fmt.Sprintf("/%s", partition))
+					for _, prefix := range prefixes {
+						names = append(names, fmt.Sprintf("/%s", prefix))
 					}
 					return names, nil
 				}
@@ -168,15 +162,10 @@ func toForensicPath(name string, addPartitions bool) ([]string, error) { // noli
 			return []string{"/" + name[:1] + name[2:]}, nil
 		case name[0] == '/' && isLetter(name[1]) && (len(name) == 2 || name[2] == '/'):
 			return []string{name}, nil
-		case addPartitions:
-			root := &osfs.Root{}
-			partitions, err := root.Readdirnames(0)
-			if err != nil {
-				return nil, err
-			}
+		case len(prefixes) > 0:
 			var names []string
-			for _, partition := range partitions {
-				names = append(names, fmt.Sprintf("/%s%s", partition, name))
+			for _, prefix := range prefixes {
+				names = append(names, fmt.Sprintf("/%s%s", prefix, name))
 			}
 			return names, nil
 		default:
@@ -186,7 +175,7 @@ func toForensicPath(name string, addPartitions bool) ([]string, error) { // noli
 	return []string{name}, nil
 }
 
-func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector ArtifactCollector) ([]string, error) {
+func expandPath(fs fslib.FS, syspath string, prefixes []string, collector ArtifactCollector) ([]string, error) {
 	// expand vars
 	variablePaths, err := recursiveResolve(syspath, collector)
 	if err != nil {
@@ -198,7 +187,7 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector Artif
 
 	var partitionPaths []string
 	for _, variablePath := range variablePaths {
-		forensicPaths, err := toForensicPath(variablePath, addPartitions)
+		forensicPaths, err := toForensicPath(variablePath, prefixes)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +221,7 @@ func expandPath(fs fslib.FS, syspath string, addPartitions bool, collector Artif
 
 func expandKey(path string, collector ArtifactCollector) ([]string, error) {
 	if runtime.GOOS == windows {
-		return expandPath(collector.Registry(), path, false, collector)
+		return expandPath(collector.Registry(), path, nil, collector)
 	}
 	return []string{}, nil
 }
