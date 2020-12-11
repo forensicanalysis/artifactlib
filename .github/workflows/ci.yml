@@ -27,8 +27,9 @@ jobs:
         working-directory: repo
       - name: Move packages
         run: |
-          mkdir -p path/src/github.com/forensicanalysis
+          mkdir -p path
           mv repo/vendor path/src
+          mkdir -p path/src/github.com/forensicanalysis
           mv repo path/src/github.com/forensicanalysis/artifactlib
           find path
         shell: bash
