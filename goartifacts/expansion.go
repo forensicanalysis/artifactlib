@@ -45,7 +45,7 @@ func ExpandSource(source Source, collector ArtifactCollector) Source {
 		var expandedPaths []string
 		for _, path := range source.Attributes.Paths {
 			if source.Attributes.Separator == "\\" {
-				path = strings.ReplaceAll(path, "\\", "/")
+				path = strings.Replace(path, "\\", "/", -1)
 			}
 			paths, err := expandPath(collector.FS(), path, collector.Prefixes(), collector)
 			if err != nil {
@@ -138,7 +138,7 @@ func toForensicPath(name string, prefixes []string) ([]string, error) { // nolin
 	}
 
 	if runtime.GOOS == windows {
-		name = strings.ReplaceAll(name, `\`, "/")
+		name = strings.Replace(name, `\`, "/", -1)
 		switch {
 		case len(name) == 0:
 			return []string{"/"}, nil
@@ -199,8 +199,8 @@ func expandPath(fs fslib.FS, syspath string, prefixes []string, collector Artifa
 	// unglob and unique paths
 	var uniquePaths []string
 	for _, expandedPath := range partitionPaths {
-		expandedPath = strings.ReplaceAll(expandedPath, "{", `\{`)
-		expandedPath = strings.ReplaceAll(expandedPath, "}", `\}`)
+		expandedPath = strings.Replace(expandedPath, "{", `\{`, -1)
+		expandedPath = strings.Replace(expandedPath, "}", `\}`, -1)
 		unglobedPaths, err := glob.Glob(fs, expandedPath)
 		if err != nil {
 			log.Println(err)
