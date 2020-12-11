@@ -31,7 +31,6 @@ jobs:
           mv repo/vendor path/src
           mkdir -p path/src/github.com/forensicanalysis
           mv repo path/src/github.com/forensicanalysis/artifactlib
-          find path
         shell: bash
       - name: Build with go 1.9.7
         run: |
@@ -50,7 +49,6 @@ jobs:
         shell: bash
       - name: Build with go 1.5.4
         run: |
-          find path
           mkdir -p go1.5.4
           curl -Lso go1.5.4.windows-amd64.zip https://golang.org/dl/go1.5.4.windows-amd64.zip
           unzip -q go1.5.4.windows-amd64.zip -d go1.5.4
