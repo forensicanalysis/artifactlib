@@ -146,11 +146,7 @@ func toForensicPath(name string, prefixes []string) ([]string, error) { // nolin
 			switch {
 			case name[0] == '/':
 				if len(prefixes) > 0 {
-					var names []string
-					for _, prefix := range prefixes {
-						names = append(names, fmt.Sprintf("%s", prefix))
-					}
-					return names, nil
+					return prefixes, nil
 				}
 				return []string{"."}, nil
 			case isLetter(name[0]):
