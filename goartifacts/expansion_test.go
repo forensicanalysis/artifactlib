@@ -159,7 +159,7 @@ func Test_expandKey(t *testing.T) {
 		want    []string
 		windows bool
 	}{
-		{"Expand Star", args{"*"}, []string{"HKEY_CLASSES_ROOT", "HKEY_CURRENT_USER", "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CURRENT_CONFIG"}, true},
+		{"Expand Star", args{"H*"}, []string{"HKEY_CLASSES_ROOT", "HKEY_CURRENT_USER", "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CURRENT_CONFIG"}, true},
 		{"Expand Key", args{"NOKEY"}, []string{}, true},
 		{"Expand HKEY_LOCAL_MACHINE star", args{`HKEY_LOCAL_MACHINE/*`}, []string{"HKEY_LOCAL_MACHINE/HARDWARE", "HKEY_LOCAL_MACHINE/SAM", "HKEY_LOCAL_MACHINE/SOFTWARE", "HKEY_LOCAL_MACHINE/SYSTEM"}, true},
 		{"Expand HKEY_LOCAL_MACHINE double star", args{`HKEY_LOCAL_MACHINE/**`}, []string{"HKEY_LOCAL_MACHINE/HARDWARE", "HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control"}, true}, // any many many more keys
