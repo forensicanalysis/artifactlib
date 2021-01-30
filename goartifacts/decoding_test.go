@@ -25,14 +25,14 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
+	"github.com/forensicanalysis/fslib/osfs"
 )
 
 func TestNewDecoder(t *testing.T) {
@@ -194,7 +194,7 @@ func TestDecodeFiles(t *testing.T) {
 	}
 
 	type args struct {
-		infs      fslib.FS
+		infs      fs.FS
 		filenames []string
 	}
 	tests := []struct {

@@ -22,7 +22,7 @@
 package goartifacts
 
 import (
-	"github.com/forensicanalysis/fslib"
+	"io/fs"
 )
 
 // ArtifactCollector is an interface that can resolve parameters in artifact
@@ -31,7 +31,7 @@ type ArtifactCollector interface {
 	Resolve(parameter string) ([]string, error)
 	Collect(name string, source Source)
 
-	FS() fslib.FS
-	Registry() fslib.FS
+	FS() fs.FS
+	Registry() fs.FS
 	Prefixes() []string
 }
