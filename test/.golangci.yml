@@ -39,7 +39,7 @@ linters:
     - gochecknoinits # Checks that no init functions are present in Go code
     - gocognit # Computes and checks the cognitive complexity of functions
     - goconst # Finds repeated strings that could be replaced by a constant
-    - gocritic # The most opinionated Go source code linter
+    # - gocritic # The most opinionated Go source code linter
     - gocyclo # Computes and checks the cyclomatic complexity of functions
     - godot # Check if comments end in a period
     # - godox # Tool for detection of FIXME, TODO and other comment keywords
@@ -81,3 +81,4 @@ issues:
     - Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked
     - (comment on exported (method|function|type|const)|should have( a package)? comment|comment should be of the form)
     - G104
+    - G307

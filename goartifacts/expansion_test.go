@@ -22,40 +22,36 @@
 package goartifacts
 
 import (
+	"io/fs"
 	"reflect"
 	"regexp"
 	"runtime"
 	"sort"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/filesystem/osfs"
-	"github.com/forensicanalysis/fslib/filesystem/registryfs"
-	"github.com/forensicanalysis/fslib/filesystem/systemfs"
-	"github.com/forensicanalysis/fslib/filesystem/testfs"
+	"github.com/forensicanalysis/fslib/osfs"
+	"github.com/forensicanalysis/fslib/registryfs"
+	"github.com/forensicanalysis/fslib/systemfs"
 )
 
-func getInFS() fslib.FS {
-	infs := &testfs.FS{}
-	content := []byte("test")
-	dirs := []string{"/dir/", "/dir/a/", "/dir/b/", "/dir/a/a/", "/dir/a/b/", "/dir/b/a/", "/dir/b/b/"}
-	for _, dir := range dirs {
-		infs.CreateDir(dir)
-	}
-	files := []string{"/foo.bin", "/dir/bar.bin", "/dir/baz.bin", "/dir/a/a/foo.bin", "/dir/a/b/foo.bin", "/dir/b/a/foo.bin", "/dir/b/b/foo.bin"}
+func getInFS() fs.FS {
+	infs := fstest.MapFS{}
+	files := []string{"foo.bin", "dir/bar.bin", "dir/baz.bin", "dir/a/a/foo.bin", "dir/a/b/foo.bin", "dir/b/a/foo.bin", "dir/b/b/foo.bin"}
 	for _, file := range files {
-		infs.CreateFile(file, content)
+		infs[file] = &fstest.MapFile{Data: []byte("test")}
 	}
 	return infs
 }
 
 func Test_expandPath(t *testing.T) {
-	validPath, err := osfs.ToForensicPath("../test/artifacts/valid")
+	validPath, err := fslib.ToForensicPath("../test/artifacts/valid")
 	if err != nil {
 		t.Fatal(err)
 	}
-	invalidPath, err := osfs.ToForensicPath("../test/artifacts/invalid")
+	invalidPath, err := fslib.ToForensicPath("../test/artifacts/invalid")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,13 +76,13 @@ func Test_expandPath(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, partition := range partitions {
-				partitonStrings = append(partitonStrings, "/"+partition)
+				partitonStrings = append(partitonStrings, ""+partition)
 			}
 		}
 	*/
 
 	type args struct {
-		fs fslib.FS
+		fs fs.FS
 		in string
 	}
 	tests := []struct {
@@ -95,18 +91,18 @@ func Test_expandPath(t *testing.T) {
 		want        []string
 		windowsOnly bool
 	}{
-		{"Expand path 1", args{getInFS(), "/*/bar.bin"}, []string{"/dir/bar.bin"}, false},
-		{"Expand path 2", args{getInFS(), "/dir/*.bin"}, []string{"/dir/bar.bin", "/dir/baz.bin"}, false},
-		{"Expand path 3", args{getInFS(), "/dir/*/*/foo.bin"}, []string{"/dir/a/a/foo.bin", "/dir/a/b/foo.bin", "/dir/b/a/foo.bin", "/dir/b/b/foo.bin"}, false},
-		{"Expand path 4", args{getInFS(), "/**"}, []string{"/dir", "/dir/a", "/dir/a/a", "/dir/a/b", "/dir/b", "/dir/b/a", "/dir/b/b", "/dir/bar.bin", "/dir/baz.bin", "/foo.bin"}, false},
-		{"Expand path 5", args{getInFS(), "/dir/**1"}, []string{"/dir/a", "/dir/b", "/dir/bar.bin", "/dir/baz.bin"}, false},
-		{"Expand path 7", args{getInFS(), "/dir/**10"}, []string{"/dir/a", "/dir/a/a", "/dir/a/a/foo.bin", "/dir/a/b", "/dir/a/b/foo.bin", "/dir/b", "/dir/b/a", "/dir/b/a/foo.bin", "/dir/b/b", "/dir/b/b/foo.bin", "/dir/bar.bin", "/dir/baz.bin"}, false},
+		{"Expand path 1", args{getInFS(), "*/bar.bin"}, []string{"dir/bar.bin"}, false},
+		{"Expand path 2", args{getInFS(), "dir/*.bin"}, []string{"dir/bar.bin", "dir/baz.bin"}, false},
+		{"Expand path 3", args{getInFS(), "dir/*/*/foo.bin"}, []string{"dir/a/a/foo.bin", "dir/a/b/foo.bin", "dir/b/a/foo.bin", "dir/b/b/foo.bin"}, false},
+		{"Expand path 4", args{getInFS(), "**"}, []string{"dir", "dir/a", "dir/a/a", "dir/a/b", "dir/b", "dir/b/a", "dir/b/b", "dir/bar.bin", "dir/baz.bin", "foo.bin"}, false},
+		{"Expand path 5", args{getInFS(), "dir/**1"}, []string{"dir/a", "dir/b", "dir/bar.bin", "dir/baz.bin"}, false},
+		{"Expand path 7", args{getInFS(), "dir/**10"}, []string{"dir/a", "dir/a/a", "dir/a/a/foo.bin", "dir/a/b", "dir/a/b/foo.bin", "dir/b", "dir/b/a", "dir/b/a/foo.bin", "dir/b/b", "dir/b/b/foo.bin", "dir/bar.bin", "dir/baz.bin"}, false},
 		// {"Expand OSpath", args{osfs.New(), "../test/artifacts/*lid"}, []string{validPath, invalidPath}, false},
-		{"Expand win path", args{osfs.New(), "C:/Windows"}, []string{"/C/Windows"}, true},
-		{"Expand special file path", args{winfs, "C:/$MFT"}, []string{"/C/$MFT"}, true},
+		{"Expand win path", args{osfs.New(), "C:/Windows"}, []string{"C/Windows"}, true},
+		{"Expand special file path", args{winfs, "C:/$MFT"}, []string{"C/$MFT"}, true},
 		// {"Expand relative win path", args{osfs.New(), "\\"}, partitonStrings, true},
-		{"Expand parameter win path", args{osfs.New(), "%%environ_systemdrive%%\\Windows"}, []string{"/C/Windows"}, true},
-		{"Expand single parameter win path", args{osfs.New(), "%environ_systemdrive%\\Windows"}, []string{"/C/Windows"}, true},
+		{"Expand parameter win path", args{osfs.New(), "%%environ_systemdrive%%\\Windows"}, []string{"C/Windows"}, true},
+		{"Expand single parameter win path", args{osfs.New(), "%environ_systemdrive%\\Windows"}, []string{"C/Windows"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -115,14 +111,22 @@ func Test_expandPath(t *testing.T) {
 				resolver.fs = tt.args.fs
 
 				var prefixes []string
-				if tt.args.fs.Name() == "OsFs" || tt.args.fs.Name() == "System FS" {
-					root, err := osfs.New().Open("/")
+				system := false
+				if _, ok := tt.args.fs.(*osfs.FS); ok {
+					system = true
+				}
+				if _, ok := tt.args.fs.(*systemfs.FS); ok {
+					system = true
+				}
+
+				if system {
+					var names []string
+					entries, err := fs.ReadDir(osfs.New(), ".")
 					if err != nil {
 						t.Fatal(err)
 					}
-					names, err := root.Readdirnames(0)
-					if err != nil {
-						t.Fatal(err)
+					for _, entry := range entries {
+						names = append(names, entry.Name())
 					}
 					prefixes = names
 				}
@@ -155,12 +159,12 @@ func Test_expandKey(t *testing.T) {
 		want    []string
 		windows bool
 	}{
-		{"Expand Star", args{"/*"}, []string{"/HKEY_CLASSES_ROOT", "/HKEY_CURRENT_USER", "/HKEY_LOCAL_MACHINE", "/HKEY_USERS", "/HKEY_CURRENT_CONFIG"}, true},
-		{"Expand Key", args{"/NOKEY"}, []string{}, true},
-		{"Expand HKEY_LOCAL_MACHINE star", args{`/HKEY_LOCAL_MACHINE/*`}, []string{"/HKEY_LOCAL_MACHINE/HARDWARE", "/HKEY_LOCAL_MACHINE/SAM", "/HKEY_LOCAL_MACHINE/SOFTWARE", "/HKEY_LOCAL_MACHINE/SYSTEM"}, true},
-		{"Expand HKEY_LOCAL_MACHINE double star", args{`/HKEY_LOCAL_MACHINE/**`}, []string{"/HKEY_LOCAL_MACHINE/HARDWARE", "/HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control"}, true}, // any many many more keys
-		{"Expand CurrentControlSet star", args{`/HKEY_LOCAL_MACHINE/System/CurrentControlSet/*`}, []string{"/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Enum", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Hardware Profiles", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Policies", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Services", "/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Software"}, true},
-		{"Expand ComputerName", args{`/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, []string{`/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, true},
+		{"Expand Star", args{"H*"}, []string{"HKEY_CLASSES_ROOT", "HKEY_CURRENT_USER", "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CURRENT_CONFIG"}, true},
+		{"Expand Key", args{"NOKEY"}, []string{}, true},
+		{"Expand HKEY_LOCAL_MACHINE star", args{`HKEY_LOCAL_MACHINE/*`}, []string{"HKEY_LOCAL_MACHINE/HARDWARE", "HKEY_LOCAL_MACHINE/SAM", "HKEY_LOCAL_MACHINE/SOFTWARE", "HKEY_LOCAL_MACHINE/SYSTEM"}, true},
+		{"Expand HKEY_LOCAL_MACHINE double star", args{`HKEY_LOCAL_MACHINE/**`}, []string{"HKEY_LOCAL_MACHINE/HARDWARE", "HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control"}, true}, // any many many more keys
+		{"Expand CurrentControlSet star", args{`HKEY_LOCAL_MACHINE/System/CurrentControlSet/*`}, []string{"HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Enum", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Hardware Profiles", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Policies", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Services", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Software"}, true},
+		{"Expand ComputerName", args{`HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, []string{`HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, true},
 		{"Expand Key", args{"NOKEY"}, []string{}, false},
 	}
 	for _, tt := range tests {

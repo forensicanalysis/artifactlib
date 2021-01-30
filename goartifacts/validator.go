@@ -44,7 +44,7 @@ const (
 	Error                   // Will likely become an error
 )
 
-// Flaw is a single issue found by the validator
+// Flaw is a single issue found by the validator.
 type Flaw struct {
 	Severity           Severity
 	Message            string
@@ -52,7 +52,7 @@ type Flaw struct {
 	File               string
 }
 
-// The validator performs all validations and stores the found flaws
+// The validator performs all validations and stores the found flaws.
 type validator struct {
 	flaws []Flaw
 }

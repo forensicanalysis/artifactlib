@@ -23,12 +23,11 @@ package goartifacts
 
 import (
 	"errors"
-
-	"github.com/forensicanalysis/fslib"
+	"io/fs"
 )
 
 type TestCollector struct {
-	fs        fslib.FS
+	fs        fs.FS
 	Collected map[string][]Source
 }
 
@@ -41,11 +40,11 @@ func (r *TestCollector) Collect(name string, source Source) {
 	r.Collected[name] = append(r.Collected[name], source)
 }
 
-func (r *TestCollector) FS() fslib.FS {
+func (r *TestCollector) FS() fs.FS {
 	return r.fs
 }
 
-func (r *TestCollector) Registry() fslib.FS {
+func (r *TestCollector) Registry() fs.FS {
 	return r.fs
 }
 

@@ -24,13 +24,13 @@ package goartifacts
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"regexp"
 	"runtime"
 	"strings"
 
-	"github.com/forensicanalysis/fslib"
-	"github.com/forensicanalysis/fslib/forensicfs/glob"
+	"github.com/forensicanalysis/fsdoublestar"
 )
 
 const windows = "windows"
@@ -133,39 +133,35 @@ func isLetter(c byte) bool {
 }
 
 func toForensicPath(name string, prefixes []string) ([]string, error) { // nolint:gocyclo,gocognit
-	if runtime.GOOS != windows && name[0] != '/' {
-		return nil, errors.New("path needs to be absolute")
+	if name[0] == '/' {
+		return nil, errors.New("path cannot start with slash")
 	}
 
 	if runtime.GOOS == windows {
 		name = strings.Replace(name, `\`, "/", -1)
 		switch {
 		case len(name) == 0:
-			return []string{"/"}, nil
+			return []string{"."}, nil
 		case len(name) == 1:
 			switch {
 			case name[0] == '/':
 				if len(prefixes) > 0 {
-					var names []string
-					for _, prefix := range prefixes {
-						names = append(names, fmt.Sprintf("/%s", prefix))
-					}
-					return names, nil
+					return prefixes, nil
 				}
-				return []string{"/"}, nil
+				return []string{"."}, nil
 			case isLetter(name[0]):
-				return []string{"/" + name}, nil
+				return []string{name}, nil
 			default:
 				return nil, fmt.Errorf("invalid path: %s", name)
 			}
 		case name[1] == ':':
-			return []string{"/" + name[:1] + name[2:]}, nil
-		case name[0] == '/' && isLetter(name[1]) && (len(name) == 2 || name[2] == '/'):
+			return []string{name[:1] + name[2:]}, nil
+		case isLetter(name[0]) && (len(name) == 1 || name[1] == '/'):
 			return []string{name}, nil
 		case len(prefixes) > 0:
 			var names []string
 			for _, prefix := range prefixes {
-				names = append(names, fmt.Sprintf("/%s%s", prefix, name))
+				names = append(names, fmt.Sprintf("%s%s", prefix, name))
 			}
 			return names, nil
 		default:
@@ -175,7 +171,7 @@ func toForensicPath(name string, prefixes []string) ([]string, error) { // nolin
 	return []string{name}, nil
 }
 
-func expandPath(fs fslib.FS, syspath string, prefixes []string, collector ArtifactCollector) ([]string, error) {
+func expandPath(fs fs.FS, syspath string, prefixes []string, collector ArtifactCollector) ([]string, error) {
 	// expand vars
 	variablePaths, err := recursiveResolve(syspath, collector)
 	if err != nil {
@@ -201,7 +197,7 @@ func expandPath(fs fslib.FS, syspath string, prefixes []string, collector Artifa
 	for _, expandedPath := range partitionPaths {
 		expandedPath = strings.Replace(expandedPath, "{", `\{`, -1)
 		expandedPath = strings.Replace(expandedPath, "}", `\}`, -1)
-		unglobedPaths, err := glob.Glob(fs, expandedPath)
+		unglobedPaths, err := fsdoublestar.Glob(fs, expandedPath)
 		if err != nil {
 			log.Println(err)
 			continue
