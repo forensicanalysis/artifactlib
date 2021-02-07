@@ -22,7 +22,6 @@
 package goartifacts
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -134,11 +133,14 @@ func isLetter(c byte) bool {
 
 func toForensicPath(name string, prefixes []string) ([]string, error) { // nolint:gocyclo,gocognit
 	if name[0] == '/' {
-		return nil, errors.New("path cannot start with slash")
+		name = name[1:]
 	}
 
 	if runtime.GOOS == windows {
 		name = strings.Replace(name, `\`, "/", -1)
+		if name[0] == '/' {
+			name = name[1:]
+		}
 		switch {
 		case len(name) == 0:
 			return []string{"."}, nil
@@ -161,7 +163,7 @@ func toForensicPath(name string, prefixes []string) ([]string, error) { // nolin
 		case len(prefixes) > 0:
 			var names []string
 			for _, prefix := range prefixes {
-				names = append(names, fmt.Sprintf("%s%s", prefix, name))
+				names = append(names, fmt.Sprintf("%s/%s", prefix, name))
 			}
 			return names, nil
 		default:
