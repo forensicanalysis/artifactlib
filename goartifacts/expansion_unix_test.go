@@ -18,9 +18,8 @@ func Test_toForensicPath(t *testing.T) {
 		want    []string
 		wantErr bool
 	}{
-		{"simple", args{name: `C:\Windows`, prefixes: []string{"C", "D"}}, []string{"C/Windows"}, false},
-		{"simple", args{name: `\Windows`, prefixes: []string{"C", "D"}}, []string{"C/Windows", "D/Windows"}, false},
-		{"simple", args{name: `/Windows`, prefixes: []string{"C", "D"}}, []string{"C/Windows", "D/Windows"}, false},
+		{"simple", args{name: `/root`, prefixes: []string{"C", "D"}}, []string{"root"}, false},
+		{"prefixes", args{name: `/root`, prefixes: nil}, []string{"root"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
