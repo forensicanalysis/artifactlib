@@ -1,8 +1,7 @@
 <h1 align="center">artifactlib</h1>
 
 <p  align="center">
- <a href="https://codecov.io/gh/forensicanalysis/artifactlib"><img src="https://codecov.io/gh/forensicanalysis/artifactlib/branch/master/graph/badge.svg" alt="coverage" /></a>
- <a href="https://godocs.io/github.com/forensicanalysis/artifactlib"><img src="https://godocs.io/github.com/forensicanalysis/zipfs?status.svg" alt="doc" /></a>
+ <a href="https://godocs.io/github.com/forensicanalysis/artifactlib/goartifacts"><img src="https://godocs.io/github.com/forensicanalysis/artifactlib?status.svg" alt="doc" /></a>
 </p>
 
 
