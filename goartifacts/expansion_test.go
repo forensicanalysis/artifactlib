@@ -47,11 +47,11 @@ func getInFS() fs.FS {
 }
 
 func Test_expandPath(t *testing.T) {
-	validPath, err := fslib.ToForensicPath("../test/artifacts/valid")
+	validPath, err := fslib.ToFSPath("../test/artifacts/valid")
 	if err != nil {
 		t.Fatal(err)
 	}
-	invalidPath, err := fslib.ToForensicPath("../test/artifacts/invalid")
+	invalidPath, err := fslib.ToFSPath("../test/artifacts/invalid")
 	if err != nil {
 		t.Fatal(err)
 	}
