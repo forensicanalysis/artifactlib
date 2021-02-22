@@ -1,0 +1,46 @@
+project_name: artifactvalidator
+builds:
+  - dir: cmd/artifactvalidator
+    binary: artifactvalidator
+    goos: [ linux, windows, darwin ]
+archives:
+  - replacements:
+      darwin: macOS
+      linux: Linux
+      windows: Windows
+    format_overrides:
+      - goos: windows
+        format: zip
+brews:
+  - tap:
+      owner: forensicanalysis
+      name: homebrew-tap
+    commit_author:
+      name: Jonas Plum
+      email: git@jonasplum.de
+    folder: Formula
+    homepage: "https://github.com/forensicanalysis/artifactlib"
+    description: "Validate forensic artifact definition files."
+    license: "MIT"
+scoop:
+  bucket:
+    owner: forensicanalysis
+    name: homebrew-tap
+  commit_author:
+    name: Jonas Plum
+    email: git@jonasplum.de
+  homepage: "https://github.com/forensicanalysis/artifactlib"
+  description: "Validate forensic artifact definition files."
+  license: MIT
+nfpms:
+  - replacements:
+      darwin: macOS
+      linux: Linux
+    homepage: "https://github.com/forensicanalysis/artifactlib"
+    maintainer: Jonas Plum <git@jonasplum.de>
+    description: "Validate forensic artifact definition files."
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
