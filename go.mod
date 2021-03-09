@@ -1,6 +1,6 @@
 module github.com/forensicanalysis/artifactlib
 
-go 1.13
+go 1.16
 
 require (
 	github.com/forensicanalysis/fsdoublestar v0.1.0
