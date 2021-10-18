@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/forensicanalysis/fsdoublestar v0.1.0
-	github.com/forensicanalysis/fslib v0.15.0
+	github.com/forensicanalysis/fslib v0.15.1
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
 	github.com/looplab/tarjan v0.1.0
