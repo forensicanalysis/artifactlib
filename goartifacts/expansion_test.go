@@ -163,7 +163,7 @@ func Test_expandKey(t *testing.T) {
 		{"Expand Key", args{"NOKEY"}, []string{}, true},
 		{"Expand HKEY_LOCAL_MACHINE star", args{`HKEY_LOCAL_MACHINE/*`}, []string{"HKEY_LOCAL_MACHINE/HARDWARE", "HKEY_LOCAL_MACHINE/SAM", "HKEY_LOCAL_MACHINE/SOFTWARE", "HKEY_LOCAL_MACHINE/SYSTEM"}, true},
 		{"Expand HKEY_LOCAL_MACHINE double star", args{`HKEY_LOCAL_MACHINE/**`}, []string{"HKEY_LOCAL_MACHINE/HARDWARE", "HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control"}, true}, // any many many more keys
-		{"Expand CurrentControlSet star", args{`HKEY_LOCAL_MACHINE/System/CurrentControlSet/*`}, []string{"HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Enum", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Hardware Profiles", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Policies", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Services", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Software"}, true},
+		{"Expand CurrentControlSet star", args{`HKEY_LOCAL_MACHINE/System/CurrentControlSet/*`}, []string{"HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Enum", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Hardware Profiles", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Policies", "HKEY_LOCAL_MACHINE/System/CurrentControlSet/Services"}, true},
 		{"Expand ComputerName", args{`HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, []string{`HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/ComputerName/ComputerName`}, true},
 		{"Expand Key", args{"NOKEY"}, []string{}, false},
 	}
@@ -253,4 +253,3 @@ func Test_replaces(t *testing.T) {
 		})
 	}
 }
-
