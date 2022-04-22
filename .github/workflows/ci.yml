@@ -88,9 +88,7 @@ jobs:
         run: go mod download
 
 
-      - name: Install golangci-lint & go-acc
-        run: go get -u github.com/ory/go-acc
-        shell: bash
+      - run: go install github.com/ory/go-acc
 
       - name: Lint
         uses: golangci/golangci-lint-action@v3
