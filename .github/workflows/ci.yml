@@ -82,7 +82,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.18
-      - run: go install github.com/ory/go-acc
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -102,9 +101,11 @@ jobs:
           args: --verbose --config test/.golangci.yml
         if: matrix.os == 'windows-latest'
 
+      - run: go install github.com/ory/go-acc@latest
       - name: Test
         run: go-acc ./...
         shell: bash
+
       - name: Upload coverage
         env:
           CI: "true"
