@@ -95,12 +95,12 @@ func main() { // nolint:gocyclo,gocognit,funlen
 		os.Exit(1)
 	}
 
-	var filteredFlaws []goartifacts.Flaw
+	var filteredFlaws []Flaw
 	if verbose {
 		filteredFlaws = flaws
 	} else {
 		for _, flaw := range flaws {
-			if flaw.Severity >= goartifacts.Warning || (!quite && flaw.Severity == goartifacts.Info) {
+			if flaw.Severity >= Warning || (!quite && flaw.Severity == Info) {
 				filteredFlaws = append(filteredFlaws, flaw)
 			}
 		}
@@ -179,16 +179,16 @@ func sortedMap(m map[string]int) ([]string, []string) {
 	return keys, values
 }
 
-func printFlaws(logger log.Logger, flaws []goartifacts.Flaw) {
+func printFlaws(logger log.Logger, flaws []Flaw) {
 	for _, flaw := range flaws {
 		switch flaw.Severity {
-		case goartifacts.Common:
+		case Common:
 			logger.Debug(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
-		case goartifacts.Info:
+		case Info:
 			logger.Info(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
-		case goartifacts.Warning:
+		case Warning:
 			logger.Warn(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
-		case goartifacts.Error:
+		case Error:
 			logger.Error(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
 		}
 	}

@@ -40,46 +40,67 @@ import (
 	"github.com/forensicanalysis/artifactlib/goartifacts"
 )
 
+// Severity level of a flaw.
+type Severity int
+
+// Severity levels of a flaw.
+const (
+	Common  Severity = iota // Common errors
+	Info                    // Style violations, will not create any issues
+	Warning                 // Will compile but might create unexpected results
+	Error                   // Will likely become an error
+)
+
+// Flaw is a single issue found by the validator.
+type Flaw struct {
+	Severity           Severity
+	Message            string
+	ArtifactDefinition string
+	File               string
+}
+
 // The validator performs all validations and stores the found flaws.
 type validator struct {
-	flaws []goartifacts.Flaw
+	flaws []Flaw
 }
 
 func newValidator() *validator {
-	return &validator{[]goartifacts.Flaw{}}
+	return &validator{[]Flaw{}}
 }
 
-func (r *validator) addFlawf(filename, artifactDefiniton string, severity goartifacts.Severity, format string, a ...interface{}) {
+func (r *validator) addFlawf(filename, artifactDefiniton string, severity Severity, format string, a ...interface{}) {
 	r.flaws = append(
 		r.flaws,
-		goartifacts.Flaw{Severity: severity, Message: fmt.Sprintf(format, a...), ArtifactDefinition: artifactDefiniton, File: filename},
+		Flaw{Severity: severity, Message: fmt.Sprintf(format, a...), ArtifactDefinition: artifactDefiniton, File: filename},
 	)
 }
 func (r *validator) addCommonf(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, goartifacts.Common, format, a...)
+	r.addFlawf(filename, artifactDefiniton, Common, format, a...)
 }
 func (r *validator) addInfof(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, goartifacts.Info, format, a...)
+	r.addFlawf(filename, artifactDefiniton, Info, format, a...)
 }
 func (r *validator) addWarningf(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, goartifacts.Warning, format, a...)
+	r.addFlawf(filename, artifactDefiniton, Warning, format, a...)
 }
 func (r *validator) addErrorf(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, goartifacts.Error, format, a...)
+	r.addFlawf(filename, artifactDefiniton, Error, format, a...)
 }
 
 // ValidateFiles checks a list of files for various flaws.
-func ValidateFiles(filenames []string) (flaws []goartifacts.Flaw, err error) {
+func ValidateFiles(filenames []string) (flaws []Flaw, err error) {
 	artifactDefinitionMap := map[string][]goartifacts.ArtifactDefinition{}
 
 	// decode file
 	for _, filename := range filenames {
-		ads, typeflaw, err := goartifacts.DecodeFile(filename)
+		ads, typeErrors, err := goartifacts.DecodeFile(filename)
 		if err != nil {
 			return flaws, err
 		}
 		artifactDefinitionMap[filename] = ads
-		flaws = append(flaws, typeflaw...)
+		for _, typeError := range typeErrors {
+			flaws = append(flaws, Flaw{Error, typeError, "", filename})
+		}
 	}
 
 	// validate
@@ -88,7 +109,7 @@ func ValidateFiles(filenames []string) (flaws []goartifacts.Flaw, err error) {
 }
 
 // ValidateArtifactDefinitions validates a map of artifact definitions and returns any flaws found in those.
-func ValidateArtifactDefinitions(artifactDefinitionMap map[string][]goartifacts.ArtifactDefinition) []goartifacts.Flaw {
+func ValidateArtifactDefinitions(artifactDefinitionMap map[string][]goartifacts.ArtifactDefinition) []Flaw {
 	r := newValidator()
 	r.validateArtifactDefinitions(artifactDefinitionMap)
 	return r.flaws

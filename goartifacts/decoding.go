@@ -28,34 +28,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Severity level of a flaw.
-type Severity int
-
-// Severity levels of a flaw.
-const (
-	Common  Severity = iota // Common errors
-	Info                    // Style violations, will not create any issues
-	Warning                 // Will compile but might create unexpected results
-	Error                   // Will likely become an error
-)
-
-// Flaw is a single issue found by the validator.
-type Flaw struct {
-	Severity           Severity
-	Message            string
-	ArtifactDefinition string
-	File               string
-}
-
 // DecodeFile takes a single artifact definition file to decode.
-func DecodeFile(filename string) ([]ArtifactDefinition, []Flaw, error) {
+func DecodeFile(filename string) ([]ArtifactDefinition, []string, error) {
 	var artifactDefinitions []ArtifactDefinition
-	var flaws []Flaw
+	var typeErrors []string
 
 	// open file
 	f, err := os.Open(filename) // #nosec
 	if err != nil {
-		return artifactDefinitions, flaws, err
+		return artifactDefinitions, typeErrors, err
 	}
 	defer f.Close()
 
@@ -64,17 +45,14 @@ func DecodeFile(filename string) ([]ArtifactDefinition, []Flaw, error) {
 	artifactDefinitions, err = dec.Decode()
 	if err != nil {
 		if typeerror, ok := err.(*yaml.TypeError); ok {
-			// parsing error
-			for _, typeerr := range typeerror.Errors {
-				flaws = append(flaws, Flaw{Error, typeerr, "", filename})
-			}
+			typeErrors = append(typeErrors, typeerror.Errors...)
 		} else {
 			// bad error
-			return artifactDefinitions, flaws, err
+			return artifactDefinitions, typeErrors, err
 		}
 	}
 
-	return artifactDefinitions, flaws, nil
+	return artifactDefinitions, typeErrors, nil
 }
 
 // DecodeFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.

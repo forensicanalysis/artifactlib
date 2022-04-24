@@ -160,7 +160,7 @@ func TestDecodeFile(t *testing.T) {
 		name    string
 		args    args
 		want    []ArtifactDefinition
-		want1   []Flaw
+		want1   []string
 		wantErr bool
 	}{
 		{"Valid Artifact Definitions", args{"../test/artifacts/valid/mac_os_double_path_3.yaml"}, []ArtifactDefinition{{Name: "Test1Directory", Doc: "Minimal dummy artifact definition for tests", Sources: []Source{{Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/etc", "/private/etc"}}, SupportedOs: []string{"Darwin"}}}}}, nil, false},
