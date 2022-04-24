@@ -17,7 +17,7 @@ sources:
     args: [info]
   conditions: [time_zone != Pacific/Galapagos]
   supported_os: [Windows,Linux,Darwin]
-conditions: [time_zone != Pacific/Galapagos]
+# conditions: [time_zone != Pacific/Galapagos]
 labels: [Docker]
 # provides: [environ_systemroot]
 supported_os: [Windows,Linux,Darwin]
