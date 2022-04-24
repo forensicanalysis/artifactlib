@@ -510,6 +510,10 @@ func (r *validator) validateURLs(filename string, artifactDefinition ArtifactDef
 		if resp.StatusCode != http.StatusOK {
 			r.addCommonf(filename, artifactDefinition.Name, "Status code retrieving url %s was %d", u, resp.StatusCode)
 		}
+
+		if err := resp.Body.Close(); err != nil {
+			r.addCommonf(filename, artifactDefinition.Name, "Error closing body for %s: %s", u, err)
+		}
 	}
 }
 
