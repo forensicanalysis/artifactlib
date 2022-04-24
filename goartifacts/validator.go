@@ -493,7 +493,7 @@ func (r *validator) validateNoDefinitionProvides(filename string, artifactDefini
 
 func (r *validator) validateURLs(filename string, artifactDefinition ArtifactDefinition) {
 	for _, u := range artifactDefinition.Urls {
-		req, err := http.NewRequest(http.MethodGet, u, nil)
+		req, err := http.NewRequest("GET", u, nil)
 		if err != nil {
 			r.addCommonf(filename, artifactDefinition.Name, "Error creating request for %s: %s", u, err)
 			continue
