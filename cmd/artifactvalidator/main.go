@@ -129,7 +129,7 @@ func main() { // nolint:gocyclo,gocognit,funlen
 		fmt.Printf("\nFound %d artifacts\n", len(artifactDefinitions))
 
 		if len(artifactDefinitions) > 0 {
-			var sourcetypes, oss, labels = map[string]int{}, map[string]int{}, map[string]int{}
+			var sourcetypes, oss = map[string]int{}, map[string]int{}
 			for _, artifactDefinition := range artifactDefinitions {
 				for _, source := range artifactDefinition.Sources {
 					inc(sourcetypes, source.Type)
@@ -137,13 +137,13 @@ func main() { // nolint:gocyclo,gocognit,funlen
 				for _, supportedOS := range artifactDefinition.SupportedOs {
 					inc(oss, supportedOS)
 				}
-				for _, label := range artifactDefinition.Labels {
-					inc(labels, label)
-				}
+				// for _, label := range artifactDefinition.Labels {
+				// 	inc(labels, label)
+				// }
 			}
 			printTable("Artifact definition by type", sourcetypes)
 			printTable("Artifact definition by OS", oss)
-			printTable("Artifact definition by label", labels)
+			// printTable("Artifact definition by label", labels)
 		}
 	}
 	os.Exit(exitcode)

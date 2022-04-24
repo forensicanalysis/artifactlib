@@ -24,11 +24,13 @@ package goartifacts
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/looplab/tarjan"
 )
@@ -142,7 +144,9 @@ func (r *validator) validateArtifactDefinition(filename string, artifactDefiniti
 	r.validateNamePrefix(filename, artifactDefinition)
 	r.validateOSSpecific(filename, artifactDefinition)
 	r.validateArtifactOS(filename, artifactDefinition)
+	r.validateNoDefinitionConditions(filename, artifactDefinition)
 	r.validateNoDefinitionProvides(filename, artifactDefinition)
+	r.validateURLs(filename, artifactDefinition)
 	if macosArtifact {
 		r.validateMacOSDoublePath(filename, artifactDefinition)
 	}
@@ -475,9 +479,37 @@ func (r *validator) validateArtifactOS(filename string, artifactDefinition Artif
 	}
 }
 
+func (r *validator) validateNoDefinitionConditions(filename string, artifactDefinition ArtifactDefinition) {
+	if len(artifactDefinition.Conditions) > 0 {
+		r.addInfof(filename, artifactDefinition.Name, "Definition conditions are deprecated")
+	}
+}
+
 func (r *validator) validateNoDefinitionProvides(filename string, artifactDefinition ArtifactDefinition) {
 	if len(artifactDefinition.Provides) > 0 {
 		r.addInfof(filename, artifactDefinition.Name, "Definition provides are deprecated")
+	}
+}
+
+func (r *validator) validateURLs(filename string, artifactDefinition ArtifactDefinition) {
+	for _, u := range artifactDefinition.Urls {
+		req, err := http.NewRequest(http.MethodGet, u, nil)
+		if err != nil {
+			r.addCommonf(filename, artifactDefinition.Name, "Error creating request for %s: %s", u, err)
+			continue
+		}
+
+		client := &http.Client{Timeout: time.Second * 5}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			r.addCommonf(filename, artifactDefinition.Name, "Error retrieving url %s: %s", u, err)
+			continue
+		}
+
+		if resp.StatusCode != 200 {
+			r.addCommonf(filename, artifactDefinition.Name, "Status code retrieving url %s was %d", u, resp.StatusCode)
+		}
 	}
 }
 

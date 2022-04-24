@@ -89,6 +89,10 @@ func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{yamldecoder: d}
 }
 
+func (dec *Decoder) SetStrict(s bool) {
+	dec.yamldecoder.SetStrict(s)
+}
+
 // Decode reads the next YAML-encoded value from its input and stores it in the
 // value pointed to by v.
 func (dec *Decoder) Decode() ([]ArtifactDefinition, error) {
