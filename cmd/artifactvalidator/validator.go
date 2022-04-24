@@ -19,7 +19,7 @@
 //
 // Author(s): Jonas Plum
 
-package goartifacts
+package main
 
 import (
 	"bufio"
@@ -33,62 +33,45 @@ import (
 	"time"
 
 	"github.com/looplab/tarjan"
+
+	"github.com/forensicanalysis/artifactlib/goartifacts"
 )
-
-// Severity level of a flaw.
-type Severity int
-
-// Severity levels of a flaw.
-const (
-	Common  Severity = iota // Common errors
-	Info                    // Style violations, will not create any issues
-	Warning                 // Will compile but might create unexpected results
-	Error                   // Will likely become an error
-)
-
-// Flaw is a single issue found by the validator.
-type Flaw struct {
-	Severity           Severity
-	Message            string
-	ArtifactDefinition string
-	File               string
-}
 
 // The validator performs all validations and stores the found flaws.
 type validator struct {
-	flaws []Flaw
+	flaws []goartifacts.Flaw
 }
 
 func newValidator() *validator {
-	return &validator{[]Flaw{}}
+	return &validator{[]goartifacts.Flaw{}}
 }
 
-func (r *validator) addFlawf(filename, artifactDefiniton string, severity Severity, format string, a ...interface{}) {
+func (r *validator) addFlawf(filename, artifactDefiniton string, severity goartifacts.Severity, format string, a ...interface{}) {
 	r.flaws = append(
 		r.flaws,
-		Flaw{severity, fmt.Sprintf(format, a...), artifactDefiniton, filename},
+		goartifacts.Flaw{Severity: severity, Message: fmt.Sprintf(format, a...), ArtifactDefinition: artifactDefiniton, File: filename},
 	)
 }
 func (r *validator) addCommonf(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, Common, format, a...)
+	r.addFlawf(filename, artifactDefiniton, goartifacts.Common, format, a...)
 }
 func (r *validator) addInfof(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, Info, format, a...)
+	r.addFlawf(filename, artifactDefiniton, goartifacts.Info, format, a...)
 }
 func (r *validator) addWarningf(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, Warning, format, a...)
+	r.addFlawf(filename, artifactDefiniton, goartifacts.Warning, format, a...)
 }
 func (r *validator) addErrorf(filename, artifactDefiniton, format string, a ...interface{}) {
-	r.addFlawf(filename, artifactDefiniton, Error, format, a...)
+	r.addFlawf(filename, artifactDefiniton, goartifacts.Error, format, a...)
 }
 
 // ValidateFiles checks a list of files for various flaws.
-func ValidateFiles(filenames []string) (flaws []Flaw, err error) {
-	artifactDefinitionMap := map[string][]ArtifactDefinition{}
+func ValidateFiles(filenames []string) (flaws []goartifacts.Flaw, err error) {
+	artifactDefinitionMap := map[string][]goartifacts.ArtifactDefinition{}
 
 	// decode file
 	for _, filename := range filenames {
-		ads, typeflaw, err := DecodeFile(filename)
+		ads, typeflaw, err := goartifacts.DecodeFile(filename)
 		if err != nil {
 			return flaws, err
 		}
@@ -102,15 +85,15 @@ func ValidateFiles(filenames []string) (flaws []Flaw, err error) {
 }
 
 // ValidateArtifactDefinitions validates a map of artifact definitions and returns any flaws found in those.
-func ValidateArtifactDefinitions(artifactDefinitionMap map[string][]ArtifactDefinition) []Flaw {
+func ValidateArtifactDefinitions(artifactDefinitionMap map[string][]goartifacts.ArtifactDefinition) []goartifacts.Flaw {
 	r := newValidator()
 	r.validateArtifactDefinitions(artifactDefinitionMap)
 	return r.flaws
 }
 
 // validateArtifactDefinitions validates single artifacts.
-func (r *validator) validateArtifactDefinitions(artifactDefinitionMap map[string][]ArtifactDefinition) {
-	var globalArtifactDefinitions []ArtifactDefinition
+func (r *validator) validateArtifactDefinitions(artifactDefinitionMap map[string][]goartifacts.ArtifactDefinition) {
+	var globalArtifactDefinitions []goartifacts.ArtifactDefinition
 
 	for filename, artifactDefinitions := range artifactDefinitionMap {
 		if filename != "" {
@@ -133,10 +116,10 @@ func (r *validator) validateArtifactDefinitions(artifactDefinitionMap map[string
 }
 
 // validateArtifactDefinition validates a single artifact.
-func (r *validator) validateArtifactDefinition(filename string, artifactDefinition ArtifactDefinition) {
-	windowsArtifact := isOSArtifactDefinition(supportedOS.Windows, artifactDefinition.SupportedOs)
-	linuxArtifact := isOSArtifactDefinition(supportedOS.Linux, artifactDefinition.SupportedOs)
-	macosArtifact := isOSArtifactDefinition(supportedOS.Darwin, artifactDefinition.SupportedOs)
+func (r *validator) validateArtifactDefinition(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
+	windowsArtifact := goartifacts.IsOSArtifactDefinition(supportedOS.Windows, artifactDefinition.SupportedOs)
+	linuxArtifact := goartifacts.IsOSArtifactDefinition(supportedOS.Linux, artifactDefinition.SupportedOs)
+	macosArtifact := goartifacts.IsOSArtifactDefinition(supportedOS.Darwin, artifactDefinition.SupportedOs)
 
 	r.validateNameCase(filename, artifactDefinition)
 	r.validateNameTypeSuffix(filename, artifactDefinition)
@@ -153,9 +136,9 @@ func (r *validator) validateArtifactDefinition(filename string, artifactDefiniti
 
 	// validate sources
 	for _, source := range artifactDefinition.Sources {
-		windowsSource := isOSArtifactDefinition(supportedOS.Windows, source.SupportedOs)
-		linuxSource := isOSArtifactDefinition(supportedOS.Linux, source.SupportedOs)
-		macosSource := isOSArtifactDefinition(supportedOS.Darwin, source.SupportedOs)
+		windowsSource := goartifacts.IsOSArtifactDefinition(supportedOS.Windows, source.SupportedOs)
+		linuxSource := goartifacts.IsOSArtifactDefinition(supportedOS.Linux, source.SupportedOs)
+		macosSource := goartifacts.IsOSArtifactDefinition(supportedOS.Darwin, source.SupportedOs)
 
 		r.validateUnnessesarryAttributes(filename, artifactDefinition.Name, source)
 		r.validateRequiredAttributes(filename, artifactDefinition.Name, source)
@@ -209,7 +192,7 @@ func (r *validator) validateSyntax(filename string) {
 
 // global
 
-func (r *validator) validateNameUnique(artifactDefinitions []ArtifactDefinition) {
+func (r *validator) validateNameUnique(artifactDefinitions []goartifacts.ArtifactDefinition) {
 	var knownNames = map[string]bool{}
 	for _, artifactDefinition := range artifactDefinitions {
 		if _, ok := knownNames[artifactDefinition.Name]; ok {
@@ -220,7 +203,7 @@ func (r *validator) validateNameUnique(artifactDefinitions []ArtifactDefinition)
 	}
 }
 
-func (r *validator) validateRegistryKeyUnique(artifactDefinitions []ArtifactDefinition) {
+func (r *validator) validateRegistryKeyUnique(artifactDefinitions []goartifacts.ArtifactDefinition) {
 	var knownKeys = map[string]bool{}
 	for _, artifactDefinition := range artifactDefinitions {
 		for _, source := range artifactDefinition.Sources {
@@ -235,7 +218,7 @@ func (r *validator) validateRegistryKeyUnique(artifactDefinitions []ArtifactDefi
 	}
 }
 
-func (r *validator) validateRegistryValueUnique(artifactDefinitions []ArtifactDefinition) {
+func (r *validator) validateRegistryValueUnique(artifactDefinitions []goartifacts.ArtifactDefinition) {
 	var knownKeys = map[string]bool{}
 	for _, artifactDefinition := range artifactDefinitions {
 		for _, source := range artifactDefinition.Sources {
@@ -253,11 +236,11 @@ func (r *validator) validateRegistryValueUnique(artifactDefinitions []ArtifactDe
 	}
 }
 
-func (r *validator) validateNoCycles(artifactDefinitions []ArtifactDefinition) {
+func (r *validator) validateNoCycles(artifactDefinitions []goartifacts.ArtifactDefinition) {
 	graph := make(map[interface{}][]interface{})
 	for _, artifactDefinition := range artifactDefinitions {
 		for _, source := range artifactDefinition.Sources {
-			if source.Type == SourceType.ArtifactGroup {
+			if source.Type == goartifacts.SourceType.ArtifactGroup {
 				graph[artifactDefinition.Name] = []interface{}{}
 				for _, name := range source.Attributes.Names {
 					if name == artifactDefinition.Name {
@@ -282,7 +265,7 @@ func (r *validator) validateNoCycles(artifactDefinitions []ArtifactDefinition) {
 	}
 }
 
-func (r *validator) validateGroupMemberExist(artifactDefinitions []ArtifactDefinition) {
+func (r *validator) validateGroupMemberExist(artifactDefinitions []goartifacts.ArtifactDefinition) {
 	var knownNames = map[string]bool{}
 	for _, artifactDefinition := range artifactDefinitions {
 		knownNames[artifactDefinition.Name] = true
@@ -302,7 +285,7 @@ func (r *validator) validateGroupMemberExist(artifactDefinitions []ArtifactDefin
 	}
 }
 
-func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDefinition) { // nolint:gocyclo,gocognit
+func (r *validator) validateParametersProvided(artifactDefinitions []goartifacts.ArtifactDefinition) { // nolint:gocyclo,gocognit
 	parametersRequired := map[string]map[string]string{
 		"Windows": {},
 		"Darwin":  {},
@@ -360,7 +343,7 @@ func (r *validator) validateParametersProvided(artifactDefinitions []ArtifactDef
 
 // file
 
-func (r *validator) validateNamePrefix(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateNamePrefix(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	prefix := ""
 	switch {
 	case strings.HasPrefix(filepath.Base(filename), "windows"):
@@ -375,7 +358,7 @@ func (r *validator) validateNamePrefix(filename string, artifactDefinition Artif
 	}
 }
 
-func (r *validator) validateOSSpecific(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateOSSpecific(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	operatingSystem := ""
 	switch {
 	case strings.HasPrefix(filepath.Base(filename), "windows"):
@@ -411,7 +394,7 @@ func (r *validator) validateOSSpecific(filename string, artifactDefinition Artif
 
 // artifact
 
-func (r *validator) validateNameCase(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateNameCase(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	if len(artifactDefinition.Name) < 2 { //nolint:gomnd
 		r.addErrorf(filename, artifactDefinition.Name, "Artifact names be longer than 2 characters")
 		return
@@ -424,7 +407,7 @@ func (r *validator) validateNameCase(filename string, artifactDefinition Artifac
 	}
 }
 
-func (r *validator) validateNameTypeSuffix(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateNameTypeSuffix(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	if len(artifactDefinition.Sources) == 0 {
 		r.addErrorf(filename, artifactDefinition.Name, "Artifact has no sources")
 		return
@@ -437,12 +420,12 @@ func (r *validator) validateNameTypeSuffix(filename string, artifactDefinition A
 	}
 
 	endings := map[string][]string{
-		SourceType.Command:       {"Command", "Commands"},
-		SourceType.Directory:     {"Directory", "Directories"},
-		SourceType.File:          {"File", "Files"},
-		SourceType.Path:          {"Path", "Paths"},
-		SourceType.RegistryKey:   {"RegistryKey", "RegistryKeys"},
-		SourceType.RegistryValue: {"RegistryValue", "RegistryValues"},
+		goartifacts.SourceType.Command:       {"Command", "Commands"},
+		goartifacts.SourceType.Directory:     {"Directory", "Directories"},
+		goartifacts.SourceType.File:          {"File", "Files"},
+		goartifacts.SourceType.Path:          {"Path", "Paths"},
+		goartifacts.SourceType.RegistryKey:   {"RegistryKey", "RegistryKeys"},
+		goartifacts.SourceType.RegistryValue: {"RegistryValue", "RegistryValues"},
 	}
 
 	if _, ok := endings[currentSourceType]; !ok {
@@ -459,13 +442,13 @@ func (r *validator) validateNameTypeSuffix(filename string, artifactDefinition A
 	}
 }
 
-func (r *validator) validateDocLong(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateDocLong(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	if strings.Contains(artifactDefinition.Doc, "\n") && !strings.Contains(artifactDefinition.Doc, "\n\n") {
 		r.addInfof(filename, artifactDefinition.Name, "Long docs should contain an empty line")
 	}
 }
 
-func (r *validator) validateArtifactOS(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateArtifactOS(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	for _, supportedos := range artifactDefinition.SupportedOs {
 		found := false
 		for _, os := range listOSS() {
@@ -479,21 +462,21 @@ func (r *validator) validateArtifactOS(filename string, artifactDefinition Artif
 	}
 }
 
-func (r *validator) validateNoDefinitionConditions(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateNoDefinitionConditions(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	if len(artifactDefinition.Conditions) > 0 {
 		r.addInfof(filename, artifactDefinition.Name, "Definition conditions are deprecated")
 	}
 }
 
-func (r *validator) validateNoDefinitionProvides(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateNoDefinitionProvides(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	if len(artifactDefinition.Provides) > 0 {
 		r.addInfof(filename, artifactDefinition.Name, "Definition provides are deprecated")
 	}
 }
 
-func (r *validator) validateURLs(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateURLs(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	for _, u := range artifactDefinition.Urls {
-		req, err := http.NewRequest("GET", u, nil)
+		req, err := http.NewRequest(http.MethodGet, u, nil)
 		if err != nil {
 			r.addCommonf(filename, artifactDefinition.Name, "Error creating request for %s: %s", u, err)
 			continue
@@ -517,13 +500,13 @@ func (r *validator) validateURLs(filename string, artifactDefinition ArtifactDef
 	}
 }
 
-func (r *validator) validateMacOSDoublePath(filename string, artifactDefinition ArtifactDefinition) {
+func (r *validator) validateMacOSDoublePath(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	knownPaths := map[string]bool{}
 	prefixes := []string{"/var", "/tmp", "/etc"}
 
-	if isOSArtifactDefinition("Darwin", artifactDefinition.SupportedOs) {
+	if goartifacts.IsOSArtifactDefinition("Darwin", artifactDefinition.SupportedOs) {
 		for _, source := range artifactDefinition.Sources {
-			if isOSArtifactDefinition("Darwin", source.SupportedOs) {
+			if goartifacts.IsOSArtifactDefinition("Darwin", source.SupportedOs) {
 				for _, path := range source.Attributes.Paths {
 					for _, prefix := range prefixes {
 						if strings.HasPrefix(path, prefix) || strings.HasPrefix(path, "/private"+prefix) {
@@ -550,7 +533,7 @@ func (r *validator) validateMacOSDoublePath(filename string, artifactDefinition 
 
 // source
 
-func (r *validator) validateUnnessesarryAttributes(filename, artifactDefinition string, source Source) { // nolint:gocyclo,lll
+func (r *validator) validateUnnessesarryAttributes(filename, artifactDefinition string, source goartifacts.Source) { // nolint:gocyclo,lll
 	hasNames := len(source.Attributes.Names) > 0
 	hasCommand := source.Attributes.Cmd != "" || len(source.Attributes.Args) > 0
 	hasPaths := len(source.Attributes.Paths) > 0 || source.Attributes.Separator != ""
@@ -559,56 +542,56 @@ func (r *validator) validateUnnessesarryAttributes(filename, artifactDefinition 
 	hasWMI := source.Attributes.Query != "" || source.Attributes.BaseObject != ""
 
 	switch source.Type {
-	case SourceType.ArtifactGroup:
+	case goartifacts.SourceType.ArtifactGroup:
 		if hasPaths || hasCommand || hasKeys || hasWMI || hasKeyValuePairs {
 			r.addWarningf(filename, artifactDefinition, "Unnessesarry attribute set")
 		}
-	case SourceType.Command:
+	case goartifacts.SourceType.Command:
 		if hasNames || hasPaths || hasKeys || hasWMI || hasKeyValuePairs {
 			r.addWarningf(filename, artifactDefinition, "Unnessesarry attribute set")
 		}
-	case SourceType.Directory:
+	case goartifacts.SourceType.Directory:
 		fallthrough
-	case SourceType.File:
+	case goartifacts.SourceType.File:
 		fallthrough
-	case SourceType.Path:
+	case goartifacts.SourceType.Path:
 		if hasNames || hasCommand || hasKeys || hasWMI || hasKeyValuePairs {
 			r.addWarningf(filename, artifactDefinition, "Unnessesarry attribute set")
 		}
-	case SourceType.RegistryKey:
+	case goartifacts.SourceType.RegistryKey:
 		if hasNames || hasPaths || hasCommand || hasWMI || hasKeyValuePairs {
 			r.addWarningf(filename, artifactDefinition, "Unnessesarry attribute set")
 		}
-	case SourceType.RegistryValue:
+	case goartifacts.SourceType.RegistryValue:
 		if hasNames || hasPaths || hasCommand || hasKeys || hasWMI {
 			r.addWarningf(filename, artifactDefinition, "Unnessesarry attribute set")
 		}
-	case SourceType.Wmi:
+	case goartifacts.SourceType.Wmi:
 		if hasNames || hasPaths || hasCommand || hasKeys || hasKeyValuePairs {
 			r.addWarningf(filename, artifactDefinition, "Unnessesarry attribute set")
 		}
 	}
 }
-func (r *validator) validateRequiredAttributes(filename, artifactDefinition string, source Source) {
+func (r *validator) validateRequiredAttributes(filename, artifactDefinition string, source goartifacts.Source) {
 	switch source.Type {
-	case SourceType.ArtifactGroup:
+	case goartifacts.SourceType.ArtifactGroup:
 		if len(source.Attributes.Names) == 0 {
 			r.addWarningf(filename, artifactDefinition, "An ARTIFACT_GROUP requires the names attribute")
 		}
-	case SourceType.Command:
+	case goartifacts.SourceType.Command:
 		if source.Attributes.Cmd == "" {
 			r.addWarningf(filename, artifactDefinition, "A COMMAND requires the cmd attribute")
 		}
 	}
 }
 
-func (r *validator) validateRequiredWindowsAttributes(filename, artifactDefinition string, source Source) {
+func (r *validator) validateRequiredWindowsAttributes(filename, artifactDefinition string, source goartifacts.Source) {
 	switch source.Type {
-	case SourceType.Directory:
+	case goartifacts.SourceType.Directory:
 		fallthrough
-	case SourceType.File:
+	case goartifacts.SourceType.File:
 		fallthrough
-	case SourceType.Path:
+	case goartifacts.SourceType.Path:
 		if len(source.Attributes.Paths) == 0 {
 			r.addWarningf(filename, artifactDefinition, "A %s requires the paths attribute", source.Type)
 		}
@@ -618,41 +601,41 @@ func (r *validator) validateRequiredWindowsAttributes(filename, artifactDefiniti
 				"A %s requires a separator value of \"\\\" or \"\"", source.Type,
 			)
 		}
-	case SourceType.RegistryKey:
+	case goartifacts.SourceType.RegistryKey:
 		if len(source.Attributes.Keys) == 0 {
 			r.addWarningf(filename, artifactDefinition, "A %s requires the keys attribute", source.Type)
 		}
-	case SourceType.RegistryValue:
+	case goartifacts.SourceType.RegistryValue:
 		if len(source.Attributes.KeyValuePairs) == 0 {
 			r.addWarningf(filename, artifactDefinition, "A %s requires the key_value_pairs attribute", source.Type)
 		}
-	case SourceType.Wmi:
+	case goartifacts.SourceType.Wmi:
 		if len(source.Attributes.Query) == 0 {
 			r.addWarningf(filename, artifactDefinition, "A %s requires the query attribute", source.Type)
 		}
 	}
 }
 
-func (r *validator) validateRequiredNonWindowsAttributes(filename, artifactDefinition string, source Source) {
+func (r *validator) validateRequiredNonWindowsAttributes(filename, artifactDefinition string, source goartifacts.Source) {
 	switch source.Type {
-	case SourceType.Directory:
+	case goartifacts.SourceType.Directory:
 		fallthrough
-	case SourceType.File:
+	case goartifacts.SourceType.File:
 		fallthrough
-	case SourceType.Path:
+	case goartifacts.SourceType.Path:
 		if len(source.Attributes.Paths) == 0 {
 			r.addWarningf(filename, artifactDefinition, "A %s requires the paths attribute", source.Type)
 		}
-	case SourceType.RegistryKey:
+	case goartifacts.SourceType.RegistryKey:
 		fallthrough
-	case SourceType.RegistryValue:
+	case goartifacts.SourceType.RegistryValue:
 		fallthrough
-	case SourceType.Wmi:
+	case goartifacts.SourceType.Wmi:
 		r.addErrorf(filename, artifactDefinition, "%s only supported for windows", source.Type)
 	}
 }
 
-func (r *validator) validateRegistryCurrentControlSet(filename, artifactDefinition string, source Source) {
+func (r *validator) validateRegistryCurrentControlSet(filename, artifactDefinition string, source goartifacts.Source) {
 	err := `Registry key should not start with %%CURRENT_CONTROL_SET%%. `
 	err += `Replace %%CURRENT_CONTROL_SET%% with HKEY_LOCAL_MACHINE\\System\\CurrentControlSet`
 
@@ -668,7 +651,7 @@ func (r *validator) validateRegistryCurrentControlSet(filename, artifactDefiniti
 	}
 }
 
-func (r *validator) validateRegistryHKEYCurrentUser(filename, artifactDefinition string, source Source) {
+func (r *validator) validateRegistryHKEYCurrentUser(filename, artifactDefinition string, source goartifacts.Source) {
 	err := `HKEY_CURRENT_USER\\ is not supported instead use: HKEY_USERS\\%%users.sid%%\\`
 	for _, key := range source.Attributes.Keys {
 		if strings.HasPrefix(key, `HKEY_CURRENT_USER\\`) {
@@ -682,7 +665,7 @@ func (r *validator) validateRegistryHKEYCurrentUser(filename, artifactDefinition
 	}
 }
 
-func (r *validator) validateDeprecatedVars(filename, artifactDefinition string, source Source) {
+func (r *validator) validateDeprecatedVars(filename, artifactDefinition string, source goartifacts.Source) {
 	deprecations := []struct {
 		old, new string
 	}{
@@ -709,7 +692,7 @@ func (r *validator) validateDeprecatedVars(filename, artifactDefinition string, 
 // 	}
 //
 
-func (r *validator) validateNoWindowsHomedir(filename, artifactDefinition string, source Source) {
+func (r *validator) validateNoWindowsHomedir(filename, artifactDefinition string, source goartifacts.Source) {
 	windowsSource := len(source.SupportedOs) == 1 && source.SupportedOs[0] == supportedOS.Windows
 	if len(source.SupportedOs) == 0 || windowsSource {
 		for _, path := range source.Attributes.Paths {
@@ -723,7 +706,7 @@ func (r *validator) validateNoWindowsHomedir(filename, artifactDefinition string
 	}
 }
 
-func (r *validator) validateSourceType(filename, artifactDefinition string, source Source) {
+func (r *validator) validateSourceType(filename, artifactDefinition string, source goartifacts.Source) {
 	for _, t := range listTypes() {
 		if t == source.Type {
 			return
@@ -732,7 +715,7 @@ func (r *validator) validateSourceType(filename, artifactDefinition string, sour
 	r.addErrorf(filename, artifactDefinition, "Type %s is not valid", source.Type)
 }
 
-func (r *validator) validateSourceOS(filename, artifactDefinition string, source Source) {
+func (r *validator) validateSourceOS(filename, artifactDefinition string, source goartifacts.Source) {
 	for _, supportedos := range source.SupportedOs {
 		found := false
 		for _, os := range listOSS() {
@@ -746,7 +729,7 @@ func (r *validator) validateSourceOS(filename, artifactDefinition string, source
 	}
 }
 
-func (r *validator) validateParameter(filename, artifactDefinition string, source Source) {
+func (r *validator) validateParameter(filename, artifactDefinition string, source goartifacts.Source) {
 	/*
 		FindInterpol := func(in string) (string, bool) {
 			re := regexp.MustCompile(`%%.*?%%`)
@@ -783,8 +766,46 @@ func (r *validator) validateParameter(filename, artifactDefinition string, sourc
 	*/
 }
 
-func (r *validator) validateSourceProvides(filename, artifactDefinition string, source Source) {
-	if (source.Type == SourceType.ArtifactGroup || source.Type == SourceType.Directory) && len(source.Provides) > 0 {
+func (r *validator) validateSourceProvides(filename, artifactDefinition string, source goartifacts.Source) {
+	if (source.Type == goartifacts.SourceType.ArtifactGroup || source.Type == goartifacts.SourceType.Directory) && len(source.Provides) > 0 {
 		r.addWarningf(filename, artifactDefinition, "%s source should not have a provides key", source.Type)
+	}
+}
+
+func getSupportedOS(definition goartifacts.ArtifactDefinition, source goartifacts.Source) []string {
+	if len(source.SupportedOs) > 0 {
+		return source.SupportedOs
+	} else if len(definition.SupportedOs) > 0 {
+		return definition.SupportedOs
+	}
+	return listOSS()
+}
+
+// supportedOS is an enumeration of all supported OSs.
+var supportedOS = struct {
+	Darwin  string
+	Linux   string
+	Windows string
+}{
+	Darwin:  "Darwin",
+	Linux:   "Linux",
+	Windows: "Windows",
+}
+
+func listOSS() []string {
+	return []string{supportedOS.Darwin, supportedOS.Linux, supportedOS.Windows}
+}
+
+// listTypes returns a list of all artifact definition source types.
+func listTypes() []string {
+	return []string{
+		goartifacts.SourceType.ArtifactGroup,
+		goartifacts.SourceType.Command,
+		goartifacts.SourceType.Directory,
+		goartifacts.SourceType.File,
+		goartifacts.SourceType.Path,
+		goartifacts.SourceType.RegistryKey,
+		goartifacts.SourceType.RegistryValue,
+		goartifacts.SourceType.Wmi,
 	}
 }

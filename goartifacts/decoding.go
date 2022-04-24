@@ -28,6 +28,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Severity level of a flaw.
+type Severity int
+
+// Severity levels of a flaw.
+const (
+	Common  Severity = iota // Common errors
+	Info                    // Style violations, will not create any issues
+	Warning                 // Will compile but might create unexpected results
+	Error                   // Will likely become an error
+)
+
+// Flaw is a single issue found by the validator.
+type Flaw struct {
+	Severity           Severity
+	Message            string
+	ArtifactDefinition string
+	File               string
+}
+
 // DecodeFile takes a single artifact definition file to decode.
 func DecodeFile(filename string) ([]ArtifactDefinition, []Flaw, error) {
 	var artifactDefinitions []ArtifactDefinition

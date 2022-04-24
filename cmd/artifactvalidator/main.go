@@ -89,7 +89,7 @@ func main() { // nolint:gocyclo,gocognit,funlen
 	}
 
 	// parse artifacts
-	flaws, err := goartifacts.ValidateFiles(args)
+	flaws, err := ValidateFiles(args)
 	if err != nil {
 		logger.Crit(err.Error())
 		os.Exit(1)
