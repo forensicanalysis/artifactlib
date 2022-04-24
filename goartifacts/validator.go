@@ -507,7 +507,7 @@ func (r *validator) validateURLs(filename string, artifactDefinition ArtifactDef
 			continue
 		}
 
-		if resp.StatusCode != 200 {
+		if resp.StatusCode != http.StatusOK {
 			r.addCommonf(filename, artifactDefinition.Name, "Status code retrieving url %s was %d", u, resp.StatusCode)
 		}
 	}
