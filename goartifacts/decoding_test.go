@@ -102,8 +102,8 @@ func TestDecoder_Decode(t *testing.T) {
 			Conditions:  []string{"time_zone != Pacific/Galapagos"},
 			SupportedOs: []string{"Windows", "Linux", "Darwin"},
 		}},
-		//Provides:    []string{"current_control_set"},
-		Conditions:  []string{"time_zone != Pacific/Galapagos"},
+		// Provides:    []string{"current_control_set"},
+		// Conditions:  []string{"time_zone != Pacific/Galapagos"},
 		SupportedOs: []string{"Windows", "Linux", "Darwin"},
 		Urls:        []string{"https://docs.docker.com/engine/reference/commandline/info/"},
 		Labels:      []string{"Docker"},
@@ -160,7 +160,7 @@ func TestDecodeFile(t *testing.T) {
 		name    string
 		args    args
 		want    []ArtifactDefinition
-		want1   []Flaw
+		want1   []string
 		wantErr bool
 	}{
 		{"Valid Artifact Definitions", args{"../test/artifacts/valid/mac_os_double_path_3.yaml"}, []ArtifactDefinition{{Name: "Test1Directory", Doc: "Minimal dummy artifact definition for tests", Sources: []Source{{Type: "DIRECTORY", Attributes: Attributes{Paths: []string{"/etc", "/private/etc"}}, SupportedOs: []string{"Darwin"}}}}}, nil, false},

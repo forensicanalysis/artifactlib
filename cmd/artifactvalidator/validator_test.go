@@ -1,3 +1,6 @@
+//go:build go1.7
+// +build go1.7
+
 // Copyright (c) 2019 Siemens AG
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -19,7 +22,7 @@
 //
 // Author(s): Jonas Plum
 
-package goartifacts
+package main
 
 import (
 	"fmt"
@@ -30,6 +33,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/forensicanalysis/artifactlib/goartifacts"
 )
 
 func TestValidator_ValidateFiles(t *testing.T) {
@@ -42,12 +47,12 @@ func TestValidator_ValidateFiles(t *testing.T) {
 		wantErr bool
 	}{
 		{"Non existing file", args{"unknown.yaml"}, true},
-		{"Valid Artifact Definitions", args{"../test/artifacts/valid/valid.yaml"}, false},
+		{"Valid Artifact Definitions", args{"../../test/artifacts/valid/valid.yaml"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := newValidator()
-			_, _, err := DecodeFile(filepath.FromSlash(tt.args.yamlfile))
+			_, _, err := goartifacts.DecodeFile(filepath.FromSlash(tt.args.yamlfile))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validator.ValidateFiles() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -70,9 +75,9 @@ func TestValidator_ValidateSyntax(t *testing.T) {
 		want          []Flaw
 	}{
 		{true, "Non existing file", args{"unknown.yaml"}, []Flaw{{Error, "Error open unknown.yaml: no such file or directory", "", filepath.FromSlash("unknown.yaml")}}},
-		{false, "Comment", args{"../test/artifacts/invalid/file_3.yaml"}, []Flaw{{Info, "The first line should be a comment", "", filepath.FromSlash("../test/artifacts/invalid/file_3.yaml")}}},
-		{false, "Wrong file ending", args{"../test/artifacts/invalid/ending.yml"}, []Flaw{{Info, "File should have .yaml ending", "", filepath.FromSlash("../test/artifacts/invalid/ending.yml")}}},
-		{false, "Whitespace at line end", args{"../test/artifacts/invalid/file_1.yaml"}, []Flaw{{Info, "Line 3 ends with whitespace", "", filepath.FromSlash("../test/artifacts/invalid/file_1.yaml")}}},
+		{false, "Comment", args{"../../test/artifacts/invalid/file_3.yaml"}, []Flaw{{Info, "The first line should be a comment", "", filepath.FromSlash("../../test/artifacts/invalid/file_3.yaml")}}},
+		{false, "Wrong file ending", args{"../../test/artifacts/invalid/ending.yml"}, []Flaw{{Info, "File should have .yaml ending", "", filepath.FromSlash("../../test/artifacts/invalid/ending.yml")}}},
+		{false, "Whitespace at line end", args{"../../test/artifacts/invalid/file_1.yaml"}, []Flaw{{Info, "Line 3 ends with whitespace", "", filepath.FromSlash("../../test/artifacts/invalid/file_1.yaml")}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,31 +99,30 @@ func TestValidator_ValidateFilesInvalid(t *testing.T) {
 		yamlfile string
 	}
 
-	files, err := ioutil.ReadDir(filepath.Join("..", "test", "artifacts", "invalid"))
+	files, err := ioutil.ReadDir(filepath.Join("..", "..", "test", "artifacts", "invalid"))
 	if err != nil {
 		t.Error(err.Error())
 	}
 	var tests []test
 	for _, file := range files {
-		tests = append(tests, test{"Test", filepath.Join("..", "test", "artifacts", "invalid", file.Name())})
+		tests = append(tests, test{"Test", filepath.Join("..", "..", "test", "artifacts", "invalid", file.Name())})
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := newValidator()
-			ads, flaws, err := DecodeFile(tt.yamlfile)
+			ads, flaws, err := goartifacts.DecodeFile(tt.yamlfile)
 			if err != nil {
 				t.Error(err)
 			}
 
-			artifactDefinitionMap := map[string][]ArtifactDefinition{
+			artifactDefinitionMap := map[string][]goartifacts.ArtifactDefinition{
 				tt.yamlfile: ads,
 			}
 
 			r.validateArtifactDefinitions(artifactDefinitionMap)
 
-			flaws = append(flaws, r.flaws...)
-			if len(flaws) == 0 {
+			if len(flaws)+len(r.flaws) == 0 {
 				t.Errorf("Validator.ValidateFiles() %s has no flaws", tt.yamlfile)
 			}
 		})
@@ -142,7 +146,7 @@ func TestValidator_validateMultipleArtifactDefinitions(t *testing.T) {
 	r := newValidator()
 	tests := []struct {
 		name     string
-		fun      func([]ArtifactDefinition)
+		fun      func([]goartifacts.ArtifactDefinition)
 		testfile string
 		want     []Flaw
 	}{
@@ -155,7 +159,7 @@ func TestValidator_validateMultipleArtifactDefinitions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ads, _, err := DecodeFile("../test/artifacts/invalid/" + tt.testfile)
+			ads, _, err := goartifacts.DecodeFile("../../test/artifacts/invalid/" + tt.testfile)
 			if err != nil {
 				t.Error(err)
 			}
@@ -172,7 +176,7 @@ func TestValidator_validateSingleArtifactDefinitions(t *testing.T) {
 	r := newValidator()
 	tests := []struct {
 		name     string
-		fun      func(string, ArtifactDefinition)
+		fun      func(string, goartifacts.ArtifactDefinition)
 		testfile string
 		want     []Flaw
 	}{
@@ -190,7 +194,7 @@ func TestValidator_validateSingleArtifactDefinitions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ads, _, err := DecodeFile(filepath.Join("..", "test", "artifacts", "invalid", filepath.FromSlash(tt.testfile)))
+			ads, _, err := goartifacts.DecodeFile(filepath.Join("..", "..", "test", "artifacts", "invalid", filepath.FromSlash(tt.testfile)))
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
@@ -211,7 +215,7 @@ func TestValidator_validateSingleSource(t *testing.T) {
 	r := newValidator()
 	tests := []struct {
 		name     string
-		fun      func(string, string, Source)
+		fun      func(string, string, goartifacts.Source)
 		testfile string
 		want     []Flaw
 	}{
@@ -249,7 +253,7 @@ func TestValidator_validateSingleSource(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ads, _, err := DecodeFile(filepath.Join("..", "test", "artifacts", "invalid", tt.testfile))
+			ads, _, err := goartifacts.DecodeFile(filepath.Join("..", "..", "test", "artifacts", "invalid", tt.testfile))
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
@@ -273,7 +277,7 @@ func TestValidator_validateNamePrefix(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		fun      func(string, ArtifactDefinition)
+		fun      func(string, goartifacts.ArtifactDefinition)
 		testfile string
 		want     []Flaw
 	}{
@@ -285,7 +289,7 @@ func TestValidator_validateNamePrefix(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ads, _, err := DecodeFile(filepath.Join("..", "test", "artifacts", "invalid", tt.testfile))
+			ads, _, err := goartifacts.DecodeFile(filepath.Join("..", "..", "test", "artifacts", "invalid", tt.testfile))
 			if err != nil {
 				t.Error(err)
 			}
@@ -317,7 +321,7 @@ func Test_validator_validateParametersProvided(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ads, flaws, err := DecodeFile(filepath.Join("..", "test", "artifacts", "invalid", tt.testfile))
+			ads, flaws, err := goartifacts.DecodeFile(filepath.Join("..", "..", "test", "artifacts", "invalid", tt.testfile))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -340,14 +344,14 @@ func Test_validator_validateNoDefinitionProvides(t *testing.T) {
 
 	type args struct {
 		filename           string
-		artifactDefinition ArtifactDefinition
+		artifactDefinition goartifacts.ArtifactDefinition
 	}
 	tests := []struct {
 		name string
 		args args
 		want []Flaw
 	}{
-		{"defintion provides", args{"foo.yml", ArtifactDefinition{Name: "Test", Provides: []string{"foo"}}}, []Flaw{
+		{"defintion provides", args{"foo.yml", goartifacts.ArtifactDefinition{Name: "Test", Provides: []string{"foo"}}}, []Flaw{
 			{Info, "Definition provides are deprecated", "Test", "foo.yml"},
 		}},
 	}
@@ -369,14 +373,14 @@ func Test_validator_validateSourceProvides(t *testing.T) {
 	type args struct {
 		filename           string
 		artifactDefinition string
-		source             Source
+		source             goartifacts.Source
 	}
 	tests := []struct {
 		name string
 		args args
 		want []Flaw
 	}{
-		{"defintion provides", args{"foo.yml", "Test", Source{Type: "ARTIFACT_GROUP", Provides: []Provide{{}}}}, []Flaw{
+		{"defintion provides", args{"foo.yml", "Test", goartifacts.Source{Type: "ARTIFACT_GROUP", Provides: []goartifacts.Provide{{}}}}, []Flaw{
 			{Warning, "ARTIFACT_GROUP source should not have a provides key", "Test", "foo.yml"},
 		}},
 	}

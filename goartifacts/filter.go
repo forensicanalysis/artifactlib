@@ -31,10 +31,10 @@ import (
 func FilterOS(artifactDefinitions []ArtifactDefinition) []ArtifactDefinition {
 	var selected []ArtifactDefinition
 	for _, artifactDefinition := range artifactDefinitions {
-		if isOSArtifactDefinition(runtime.GOOS, artifactDefinition.SupportedOs) {
+		if IsOSArtifactDefinition(runtime.GOOS, artifactDefinition.SupportedOs) {
 			var sources []Source
 			for _, source := range artifactDefinition.Sources {
-				if isOSArtifactDefinition(runtime.GOOS, source.SupportedOs) {
+				if IsOSArtifactDefinition(runtime.GOOS, source.SupportedOs) {
 					sources = append(sources, source)
 				}
 			}
@@ -59,7 +59,7 @@ func FilterName(names []string, artifactDefinitions []ArtifactDefinition) []Arti
 	return artifactList
 }
 
-func isOSArtifactDefinition(os string, supportedOs []string) bool {
+func IsOSArtifactDefinition(os string, supportedOs []string) bool {
 	if len(supportedOs) == 0 {
 		return true
 	}
@@ -69,13 +69,4 @@ func isOSArtifactDefinition(os string, supportedOs []string) bool {
 		}
 	}
 	return false
-}
-
-func getSupportedOS(definition ArtifactDefinition, source Source) []string {
-	if len(source.SupportedOs) > 0 {
-		return source.SupportedOs
-	} else if len(definition.SupportedOs) > 0 {
-		return definition.SupportedOs
-	}
-	return listOSS()
 }

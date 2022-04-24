@@ -95,14 +95,14 @@ func expandArtifactGroup(names []string, definitions map[string]ArtifactDefiniti
 			continue
 		}
 
-		if !isOSArtifactDefinition(runtime.GOOS, artifact.SupportedOs) {
+		if !IsOSArtifactDefinition(runtime.GOOS, artifact.SupportedOs) {
 			continue
 		}
 
 		onlyGroup := true
 		for _, source := range artifact.Sources {
 			if source.Type == SourceType.ArtifactGroup {
-				if isOSArtifactDefinition(runtime.GOOS, source.SupportedOs) {
+				if IsOSArtifactDefinition(runtime.GOOS, source.SupportedOs) {
 					for subName, subArtifact := range expandArtifactGroup(source.Attributes.Names, definitions) {
 						selected[subName] = subArtifact
 					}
@@ -114,7 +114,7 @@ func expandArtifactGroup(names []string, definitions map[string]ArtifactDefiniti
 		if !onlyGroup {
 			var sources []Source
 			for _, source := range artifact.Sources {
-				if isOSArtifactDefinition(runtime.GOOS, source.SupportedOs) {
+				if IsOSArtifactDefinition(runtime.GOOS, source.SupportedOs) {
 					sources = append(sources, source)
 				}
 			}

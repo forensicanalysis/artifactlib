@@ -108,32 +108,3 @@ var SourceType = struct {
 	RegistryValue: "REGISTRY_VALUE",
 	Wmi:           "WMI",
 }
-
-// listTypes returns a list of all artifact definition source types.
-func listTypes() []string {
-	return []string{
-		SourceType.ArtifactGroup,
-		SourceType.Command,
-		SourceType.Directory,
-		SourceType.File,
-		SourceType.Path,
-		SourceType.RegistryKey,
-		SourceType.RegistryValue,
-		SourceType.Wmi,
-	}
-}
-
-// supportedOS is an enumeration of all supported OSs.
-var supportedOS = struct {
-	Darwin  string
-	Linux   string
-	Windows string
-}{
-	Darwin:  "Darwin",
-	Linux:   "Linux",
-	Windows: "Windows",
-}
-
-func listOSS() []string {
-	return []string{supportedOS.Darwin, supportedOS.Linux, supportedOS.Windows}
-}

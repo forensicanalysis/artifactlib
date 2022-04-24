@@ -89,18 +89,18 @@ func main() { // nolint:gocyclo,gocognit,funlen
 	}
 
 	// parse artifacts
-	flaws, err := goartifacts.ValidateFiles(args)
+	flaws, err := ValidateFiles(args)
 	if err != nil {
 		logger.Crit(err.Error())
 		os.Exit(1)
 	}
 
-	var filteredFlaws []goartifacts.Flaw
+	var filteredFlaws []Flaw
 	if verbose {
 		filteredFlaws = flaws
 	} else {
 		for _, flaw := range flaws {
-			if flaw.Severity >= goartifacts.Warning || (!quite && flaw.Severity == goartifacts.Info) {
+			if flaw.Severity >= Warning || (!quite && flaw.Severity == Info) {
 				filteredFlaws = append(filteredFlaws, flaw)
 			}
 		}
@@ -129,7 +129,7 @@ func main() { // nolint:gocyclo,gocognit,funlen
 		fmt.Printf("\nFound %d artifacts\n", len(artifactDefinitions))
 
 		if len(artifactDefinitions) > 0 {
-			var sourcetypes, oss, labels = map[string]int{}, map[string]int{}, map[string]int{}
+			var sourcetypes, oss = map[string]int{}, map[string]int{}
 			for _, artifactDefinition := range artifactDefinitions {
 				for _, source := range artifactDefinition.Sources {
 					inc(sourcetypes, source.Type)
@@ -137,13 +137,13 @@ func main() { // nolint:gocyclo,gocognit,funlen
 				for _, supportedOS := range artifactDefinition.SupportedOs {
 					inc(oss, supportedOS)
 				}
-				for _, label := range artifactDefinition.Labels {
-					inc(labels, label)
-				}
+				// for _, label := range artifactDefinition.Labels {
+				// 	inc(labels, label)
+				// }
 			}
 			printTable("Artifact definition by type", sourcetypes)
 			printTable("Artifact definition by OS", oss)
-			printTable("Artifact definition by label", labels)
+			// printTable("Artifact definition by label", labels)
 		}
 	}
 	os.Exit(exitcode)
@@ -179,16 +179,16 @@ func sortedMap(m map[string]int) ([]string, []string) {
 	return keys, values
 }
 
-func printFlaws(logger log.Logger, flaws []goartifacts.Flaw) {
+func printFlaws(logger log.Logger, flaws []Flaw) {
 	for _, flaw := range flaws {
 		switch flaw.Severity {
-		case goartifacts.Common:
+		case Common:
 			logger.Debug(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
-		case goartifacts.Info:
+		case Info:
 			logger.Info(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
-		case goartifacts.Warning:
+		case Warning:
 			logger.Warn(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
-		case goartifacts.Error:
+		case Error:
 			logger.Error(fmt.Sprintf("%-60s %-30s %s", flaw.File, flaw.ArtifactDefinition, flaw.Message))
 		}
 	}

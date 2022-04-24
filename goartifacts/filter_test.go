@@ -66,7 +66,7 @@ func Test_isOSArtifactDefinition(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isOSArtifactDefinition(tt.args.os, tt.args.supportedOs); got != tt.want {
+			if got := IsOSArtifactDefinition(tt.args.os, tt.args.supportedOs); got != tt.want {
 				t.Errorf("isOSArtifactDefinition() = %v, want %v", got, tt.want)
 			}
 		})

@@ -29,14 +29,14 @@ import (
 )
 
 // DecodeFile takes a single artifact definition file to decode.
-func DecodeFile(filename string) ([]ArtifactDefinition, []Flaw, error) {
+func DecodeFile(filename string) ([]ArtifactDefinition, []string, error) {
 	var artifactDefinitions []ArtifactDefinition
-	var flaws []Flaw
+	var typeErrors []string
 
 	// open file
 	f, err := os.Open(filename) // #nosec
 	if err != nil {
-		return artifactDefinitions, flaws, err
+		return artifactDefinitions, typeErrors, err
 	}
 	defer f.Close()
 
@@ -45,17 +45,14 @@ func DecodeFile(filename string) ([]ArtifactDefinition, []Flaw, error) {
 	artifactDefinitions, err = dec.Decode()
 	if err != nil {
 		if typeerror, ok := err.(*yaml.TypeError); ok {
-			// parsing error
-			for _, typeerr := range typeerror.Errors {
-				flaws = append(flaws, Flaw{Error, typeerr, "", filename})
-			}
+			typeErrors = append(typeErrors, typeerror.Errors...)
 		} else {
 			// bad error
-			return artifactDefinitions, flaws, err
+			return artifactDefinitions, typeErrors, err
 		}
 	}
 
-	return artifactDefinitions, flaws, nil
+	return artifactDefinitions, typeErrors, nil
 }
 
 // DecodeFiles takes a list of artifact definition files. Those files are decoded, validated, filtered and expanded.
@@ -87,6 +84,10 @@ func NewDecoder(r io.Reader) *Decoder {
 	d := yaml.NewDecoder(r)
 	d.SetStrict(true)
 	return &Decoder{yamldecoder: d}
+}
+
+func (dec *Decoder) SetStrict(s bool) {
+	dec.yamldecoder.SetStrict(s)
 }
 
 // Decode reads the next YAML-encoded value from its input and stores it in the

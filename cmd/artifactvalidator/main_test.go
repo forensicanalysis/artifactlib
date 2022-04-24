@@ -1,3 +1,4 @@
+//go:build go1.7
 // +build go1.7
 
 // Copyright (c) 2019 Siemens AG
@@ -28,8 +29,6 @@ import (
 	"testing"
 
 	log "github.com/inconshreveable/log15"
-
-	"github.com/forensicanalysis/artifactlib/goartifacts"
 )
 
 func Test_inc(t *testing.T) {
@@ -100,13 +99,13 @@ func Test_sortedMap(t *testing.T) {
 
 func Test_printFlaws(t *testing.T) {
 	type args struct {
-		flaws []goartifacts.Flaw
+		flaws []Flaw
 	}
 	tests := []struct {
 		name string
 		args args
 	}{
-		{"Print Flaws", args{[]goartifacts.Flaw{{Severity: goartifacts.Common}, {Severity: goartifacts.Info}, {Severity: goartifacts.Warning}, {Severity: goartifacts.Error}}}},
+		{"Print Flaws", args{[]Flaw{{Severity: Common}, {Severity: Info}, {Severity: Warning}, {Severity: Error}}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
