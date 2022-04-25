@@ -33,6 +33,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/looplab/tarjan"
@@ -137,6 +138,8 @@ func (r *validator) validateArtifactDefinitions(artifactDefinitionMap map[string
 	r.validateGroupMemberExist(globalArtifactDefinitions)
 	r.validateNoCycles(globalArtifactDefinitions)
 	r.validateParametersProvided(globalArtifactDefinitions)
+
+	r.validateArtifactURLs(artifactDefinitionMap)
 }
 
 // validateArtifactDefinition validates a single artifact.
@@ -153,7 +156,6 @@ func (r *validator) validateArtifactDefinition(filename string, artifactDefiniti
 	r.validateArtifactOS(filename, artifactDefinition)
 	r.validateNoDefinitionConditions(filename, artifactDefinition)
 	r.validateNoDefinitionProvides(filename, artifactDefinition)
-	r.validateURLs(filename, artifactDefinition)
 	if macosArtifact {
 		r.validateMacOSDoublePath(filename, artifactDefinition)
 	}
@@ -365,6 +367,78 @@ func (r *validator) validateParametersProvided(artifactDefinitions []goartifacts
 	}
 }
 
+func (r *validator) validateArtifactURLs(artifactDefinitionMap map[string][]goartifacts.ArtifactDefinition) {
+	var jobWaitGroup sync.WaitGroup
+
+	type urlJob struct {
+		filename string
+		artifact string
+		url      string
+	}
+
+	type urlResult struct {
+		filename string
+		artifact string
+		err      string
+	}
+
+	const numJobs = 1000
+	jobs := make(chan urlJob, numJobs)
+	results := make(chan urlResult, numJobs)
+
+	// process urls
+	go func() {
+		for w := 1; w <= 40; w++ {
+			jobWaitGroup.Add(1)
+			go func() {
+				defer jobWaitGroup.Done()
+				for j := range jobs {
+					req, err := http.NewRequest(http.MethodGet, j.url, nil)
+					if err != nil {
+						results <- urlResult{filename: j.filename, artifact: j.artifact, err: fmt.Sprintf("Error creating request for %s: %s", j.url, err)}
+						continue
+					}
+
+					client := &http.Client{Timeout: time.Second * 10}
+
+					resp, err := client.Do(req)
+					if err != nil {
+						results <- urlResult{filename: j.filename, artifact: j.artifact, err: fmt.Sprintf("Error retrieving url %s: %s", j.url, err)}
+						continue
+					}
+
+					if resp.StatusCode != http.StatusOK {
+						results <- urlResult{filename: j.filename, artifact: j.artifact, err: fmt.Sprintf("Status code retrieving url %s was %d", j.url, resp.StatusCode)}
+					}
+
+					if err := resp.Body.Close(); err != nil {
+						results <- urlResult{filename: j.filename, artifact: j.artifact, err: fmt.Sprintf("Error closing body for %s: %s", j.url, err)}
+					}
+				}
+			}()
+		}
+		jobWaitGroup.Wait()
+		close(results)
+	}()
+
+	for filename, artifactDefinitions := range artifactDefinitionMap {
+		for _, artifactDefinition := range artifactDefinitions {
+			for _, u := range artifactDefinition.Urls {
+				jobs <- urlJob{
+					filename: filename,
+					artifact: artifactDefinition.Name,
+					url:      u,
+				}
+			}
+		}
+	}
+	close(jobs)
+
+	for res := range results {
+		r.addCommonf(res.filename, res.artifact, res.err)
+	}
+}
+
 // file
 
 func (r *validator) validateNamePrefix(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
@@ -495,32 +569,6 @@ func (r *validator) validateNoDefinitionConditions(filename string, artifactDefi
 func (r *validator) validateNoDefinitionProvides(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	if len(artifactDefinition.Provides) > 0 {
 		r.addInfof(filename, artifactDefinition.Name, "Definition provides are deprecated")
-	}
-}
-
-func (r *validator) validateURLs(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
-	for _, u := range artifactDefinition.Urls {
-		req, err := http.NewRequest(http.MethodGet, u, nil)
-		if err != nil {
-			r.addCommonf(filename, artifactDefinition.Name, "Error creating request for %s: %s", u, err)
-			continue
-		}
-
-		client := &http.Client{Timeout: time.Second * 5}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			r.addCommonf(filename, artifactDefinition.Name, "Error retrieving url %s: %s", u, err)
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			r.addCommonf(filename, artifactDefinition.Name, "Status code retrieving url %s was %d", u, resp.StatusCode)
-		}
-
-		if err := resp.Body.Close(); err != nil {
-			r.addCommonf(filename, artifactDefinition.Name, "Error closing body for %s: %s", u, err)
-		}
 	}
 }
 
