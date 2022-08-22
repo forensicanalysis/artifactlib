@@ -26,10 +26,12 @@
 // that can validate artifact definition files and search for errors, possible
 // inconsistencies and other flaws.
 //
-// Usage
+// # Usage
 //
 // To run just provide the location of the forensic artifact definition files:
-//     artifactvalidator -v -s artifacts/data/*.yaml
+//
+//	artifactvalidator -v -s artifacts/data/*.yaml
+//
 // The output is a list of potential issues in those files.
 package main
 
