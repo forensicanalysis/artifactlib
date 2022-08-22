@@ -316,6 +316,7 @@ func (r *validator) validateParametersProvided(artifactDefinitions []goartifacts
 		"Windows": {},
 		"Darwin":  {},
 		"Linux":   {},
+		"ESXi":    {},
 	}
 	var regex = regexp.MustCompile(`%?%(.*?)%?%`)
 
@@ -343,6 +344,7 @@ func (r *validator) validateParametersProvided(artifactDefinitions []goartifacts
 		"Windows": {},
 		"Darwin":  {},
 		"Linux":   {},
+		"ESXi":    {},
 	}
 
 	for _, artifactDefinition := range artifactDefinitions {
@@ -494,7 +496,10 @@ func (r *validator) validateOSSpecific(filename string, artifactDefinition goart
 
 func (r *validator) validateNameCase(filename string, artifactDefinition goartifacts.ArtifactDefinition) {
 	if len(artifactDefinition.Name) < 2 { //nolint:gomnd
-		r.addErrorf(filename, artifactDefinition.Name, "Artifact names be longer than 2 characters")
+		r.addErrorf(filename, artifactDefinition.Name, "Artifact names need be longer than 2 characters")
+		return
+	}
+	if strings.HasPrefix(artifactDefinition.Name, "vSphere") || strings.HasPrefix(artifactDefinition.Name, "vCenter") {
 		return
 	}
 	if strings.ToUpper(artifactDefinition.Name[:1]) != artifactDefinition.Name[:1] {
@@ -858,14 +863,16 @@ var supportedOS = struct {
 	Darwin  string
 	Linux   string
 	Windows string
+	ESXi    string
 }{
 	Darwin:  "Darwin",
 	Linux:   "Linux",
 	Windows: "Windows",
+	ESXi:    "ESXi",
 }
 
 func listOSS() []string {
-	return []string{supportedOS.Darwin, supportedOS.Linux, supportedOS.Windows}
+	return []string{supportedOS.Darwin, supportedOS.Linux, supportedOS.Windows, supportedOS.ESXi}
 }
 
 // listTypes returns a list of all artifact definition source types.
