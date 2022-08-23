@@ -54,13 +54,13 @@ type Provide struct {
 // The Source type objects define the source of the artifact data. Currently
 // the following source types are defined:
 //
-//     * artifact; the source is one or more artifact definitions;
-//     * file; the source is one or more files;
-//     * path; the source is one or more paths;
-//     * directory; the source is one or more directories;
-//     * Windows Registry key; the source is one or more Windows Registry keys;
-//     * Windows Registry value; the source is one or more Windows Registry values;
-//     * WMI query; the source is a Windows Management Instrumentation query.
+//   - artifact; the source is one or more artifact definitions;
+//   - file; the source is one or more files;
+//   - path; the source is one or more paths;
+//   - directory; the source is one or more directories;
+//   - Windows Registry key; the source is one or more Windows Registry keys;
+//   - Windows Registry value; the source is one or more Windows Registry values;
+//   - WMI query; the source is a Windows Management Instrumentation query.
 //
 // The difference between the file and path source types are that file should
 // be used to define file entries that contain data and path, file entries that

@@ -314,9 +314,11 @@ func Test_validator_validateParametersProvided(t *testing.T) {
 			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Windows", "TestProvided", ""},
 			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Linux", "TestProvided", ""},
 			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Darwin", "TestProvided", ""},
+			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for ESXi", "TestProvided", ""},
 		}},
 		{"No provides 2", "not_provided_2.yaml", []Flaw{
 			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for Windows", "TestProvided2", ""},
+			{Warning, "Parameter CURRENT_CONTROL_SET is not provided for ESXi", "TestProvided2", ""},
 		}},
 	}
 	for _, tt := range tests {
