@@ -92,13 +92,13 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.45.2
-          args: --verbose --config test/.golangci.yml --enable gofmt --enable goimports  ./...
+          args: --verbose --config test/.golangci.yml --enable gofmt --enable goimports goartifacts
         if: matrix.os != 'windows-latest'
       - name: Lint Windows
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.45.2
-          args: --verbose --config test/.golangci.yml  ./...
+          args: --verbose --config test/.golangci.yml goartifacts
         if: matrix.os == 'windows-latest'
 
       - run: go install github.com/ory/go-acc@latest
