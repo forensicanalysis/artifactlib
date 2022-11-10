@@ -3,6 +3,9 @@ builds:
   - dir: cmd/artifactvalidator
     binary: artifactvalidator
     goos: [ linux, windows, darwin ]
+    ignore:
+      - goos: windows
+        goarch: arm64
 archives:
   - replacements:
       darwin: macOS
