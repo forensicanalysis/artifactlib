@@ -8,7 +8,7 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
 	github.com/looplab/tarjan v0.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -21,5 +21,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.10 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	golang.org/x/sys v0.0.0-20210218155724-8ebf48af031b // indirect
+	gopkg.in/yaml.v2 v2.2.4
 	www.velocidex.com/golang/go-ntfs v0.1.1 // indirect
 )
